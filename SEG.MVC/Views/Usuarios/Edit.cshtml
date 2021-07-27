@@ -1,0 +1,74 @@
+﻿@model Seguranca.Domain.Models.UsuarioModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+@{  
+    var seguranca = (Seguranca.Domain.Seguranca)ViewBag.Seguranca;
+    var pu = Model.PerfisUsuario.FirstOrDefault(pu => pu.UsuarioId == Model.UsuarioId);
+}
+
+@await Html.PartialAsync("~/Views/Partial/_Usuario.cshtml")
+
+<h1>Restrições</h1>
+<table class="table">
+    <thead>
+        @foreach (var item in Model.RestricoesUsuario)
+        {
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => item.Modulo.Nome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => item.Formulario.Nome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => item.Evento.Nome)
+                </th>
+                <th></th>
+            </tr>
+            break;
+        }
+    </thead>
+    <tbody>
+        @foreach (var item in Model.RestricoesUsuario)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(model => item.Modulo.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Formulario.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Evento.Nome)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            @if (seguranca.Usuario.Nome != Model.Nome && seguranca.Perfil.FuncaoId < pu.Perfil.FuncaoId)
+            {
+                <div class="form-group-footer">
+                    <a asp-controller="Usuarios" asp-action="EditRestricoes"
+                       asp-route-usuarioId="@Model.UsuarioId" class="btn btn-primary">
+                           Associar restrições a este usuário
+                    </a> 
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Voltar</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

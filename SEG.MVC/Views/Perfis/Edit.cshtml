@@ -1,0 +1,113 @@
+﻿@model Seguranca.Domain.Models.PerfilModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+@{
+    var seguranca = (Seguranca.Domain.Seguranca)ViewBag.Seguranca;
+    var pu = Model.PerfisUsuario.FirstOrDefault(pu => pu.Usuario.Nome == seguranca.Usuario.Nome);
+    var nomeUsuario = pu == null ? null : pu.Usuario.Nome;
+}
+
+<h1>Editar</h1>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Nome" class="control-label"></label>
+                <input asp-for="Nome" class="form-control" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Descricao" class="control-label"></label>
+                <input asp-for="Descricao" class="form-control" />
+                <span asp-validation-for="Descricao" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FuncaoId" class="control-label"></label>
+                 @Html.DropDownListFor(modelItem => 
+                     modelItem.FuncaoId,
+                     new SelectList(ViewBag.Funcoes, "FuncaoId","Nome"),
+                     "Selecione...",
+                     new {@class="form-control"}
+                 ) 
+                 <span asp-validation-for="FuncaoId" class="text-danger"></span>
+            </div>
+            <div>
+                <input type="hidden" asp-for="CreatedSystem" />
+            </div>
+
+            @if (seguranca.Usuario.Nome != nomeUsuario && seguranca.Perfil.FuncaoId < Model.FuncaoId)
+            {
+                <div class="form-group">
+                    <input type="submit" value="Salvar" class="btn btn-primary" />
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<h1>Restrições</h1>
+<table class="table">
+    <thead>
+        @foreach (var item in Model.RestricoesPerfil)
+        {
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => item.Modulo.Nome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => item.Formulario.Nome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => item.Evento.Nome)
+                </th>
+                <th></th>
+            </tr>
+
+            break;
+        }
+    </thead>
+    <tbody>
+        @foreach (var item in Model.RestricoesPerfil)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(model => item.Modulo.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Formulario.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Evento.Nome)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            @if (seguranca.Usuario.Nome != nomeUsuario && seguranca.Perfil.FuncaoId < Model.FuncaoId)            {
+                <div class="form-group-footer">
+                    <a asp-controller="Perfis" asp-action="EditRestricoes"
+                       asp-route-perfilId="@Model.PerfilId" class="btn btn-primary">
+                            Associar restrições a este perfil
+                    </a>                     
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Voltar</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

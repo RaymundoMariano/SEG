@@ -1,0 +1,43 @@
+﻿@model Seguranca.Domain.Models.UsuarioModel
+
+@{  
+    var pu = Model.PerfisUsuario.FirstOrDefault(pu => pu.UsuarioId == Model.UsuarioId);
+}
+
+<h1>Usuário</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => pu.Perfil.Nome)
+            </th>
+              <th>
+                @Html.DisplayNameFor(model => pu.Perfil.Funcao.Nome)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                @Html.DisplayFor(model => model.Nome)
+            </td>
+            <td>
+                @Html.DisplayFor(model => model.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(model => pu.Perfil.Nome)
+            </td>
+              <td>
+                @Html.DisplayFor(model => pu.Perfil.Funcao.Nome)
+            </td>
+        </tr>
+    </tbody>
+</table>

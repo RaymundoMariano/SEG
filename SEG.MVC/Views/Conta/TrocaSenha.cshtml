@@ -1,0 +1,41 @@
+﻿@model Seguranca.Domain.Auth.Requests.TrocaSenhaRequest
+
+@{
+    ViewBag.Title = "Trocar Senha";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <form name="Login" method="post">                
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="SenhaAtual" class="control-label"></label>
+                <input asp-for="SenhaAtual" class="form-control" />
+                <span asp-validation-for="SenhaAtual" class="text-danger"></span>
+            </div>  
+            <div class="form-group">
+                <label asp-for="NovaSenha" class="control-label"></label>
+                <input asp-for="NovaSenha" class="form-control" />
+                <span asp-validation-for="NovaSenha" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ConfirmeSenha" class="control-label"></label>
+                <input asp-for="ConfirmeSenha" class="form-control" />
+                <span asp-validation-for="ConfirmeSenha" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-outline-secondary">
+                    Trocar
+                </button>
+                <a class="btn btn-outline-warning" href="@Url.Action("Index","Home")">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

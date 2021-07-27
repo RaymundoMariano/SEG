@@ -1,0 +1,12 @@
+﻿@if (ViewBag.ErrorTitle == null)
+{
+    <h3>
+     Erro de processamento!
+    </h3>
+    <h5>Contate o responsável pelo sistema: gledisson@hotmail.com</h5>
+}
+else
+{
+    <h1 class="text-danger">@ViewBag.ErrorTitle</h1>
+    <h5 class="text-danger">@ViewBag.ErrorMessage</h5>
+}

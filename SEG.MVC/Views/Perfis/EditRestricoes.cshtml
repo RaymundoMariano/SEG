@@ -1,0 +1,144 @@
+﻿@model List<Seguranca.Domain.Models.RestricaoPerfilModel>
+
+@{
+    ViewData["Title"] = "EditRestricoes";
+}
+
+@{
+    var perfil = (Seguranca.Domain.Models.PerfilModel)ViewBag.Perfil;
+}
+
+<h1>Perfil</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => perfil.Nome)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => perfil.Descricao)
+            </th>
+              <th>
+                @Html.DisplayNameFor(model => perfil.Funcao.Nome)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                @Html.DisplayFor(model => perfil.Nome)
+            </td>
+            <td>
+                @Html.DisplayFor(model => perfil.Descricao)
+            </td>
+            <td>
+                @Html.DisplayFor(model => perfil.Funcao.Nome)
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h1>Restrições</h1>
+<form method="post">
+    <div class="form-group">
+        <div class="form-group-body">
+            <table class="table">
+                @foreach (var ru in Model)
+                {
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => ru.Modulo.Nome)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => ru.Formulario.Nome)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => ru.Evento.Nome)
+                        </th>
+                        <th></th>
+                    </tr>
+                    break;
+                }
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    @if (Model[i].Perfil != null)
+                    {
+                        <div class="form-check m-1">
+                            <input type="hidden" asp-for="@Model[i].Id" />
+                        </div>       
+                    }
+                    <tr>
+                        @if (Model[i].Modulo != null)
+                        {
+                            <td>
+                                <div class="form-check m-1">
+                                    <input type="hidden" asp-for="@Model[i].ModuloId" />
+                                    <input type="hidden" asp-for="@Model[i].Modulo.Nome" />
+                                    <input asp-for="@Model[i].Modulo.Selected" class="form-check-input" />
+                                    <label class="form-check-label" asp-for="@Model[i].Modulo.Selected">
+                                        @Model[i].Modulo.Nome
+                                    </label>
+                                </div>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>
+                                @Html.DisplayFor(model => Model[i].Modulo.Nome)
+                            </td>
+                        }
+                        @if (Model[i].Formulario != null)
+                        {
+                            <td>
+                                <div class="form-check m-1">
+                                    <input type="hidden" asp-for="@Model[i].FormularioId" />
+                                    <input type="hidden" asp-for="@Model[i].Formulario.Nome" />
+                                    <input asp-for="@Model[i].Formulario.Selected" class="form-check-input" />
+                                    <label class="form-check-label" asp-for="@Model[i].Formulario.Selected">
+                                        @Model[i].Formulario.Nome
+                                    </label>
+                                </div>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>
+                                @Html.DisplayFor(model => Model[i].Formulario.Nome)
+                            </td>
+                        }
+                        @if (Model[i].Evento != null)
+                        {
+                            <td>
+                                <div class="form-check m-1">
+                                    <input type="hidden" asp-for="@Model[i].EventoId" />
+                                    <input type="hidden" asp-for="@Model[i].Evento.Nome" />
+                                    <input asp-for="@Model[i].Evento.Selected" class="form-check-input" />
+                                    <label class="form-check-label" asp-for="@Model[i].Evento.Selected">
+                                        @Model[i].Evento.Nome
+                                    </label>
+                                </div>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>
+                                @Html.DisplayFor(model => Model[i].Evento.Nome)
+                            </td>
+                        }
+                    </tr>
+                }
+            </table>
+        </div>
+
+        <div class="form-group-footer">
+            @if (Model != null && Model.Count != 0)
+            {
+                <input type="submit" value="Atualizar" class="btn btn-primary" style="width:auto" />
+            }
+            <a asp-action="Edit" asp-route-id="@perfil.PerfilId"
+               class="btn btn-primary" style="width:auto">Cancelar</a>
+        </div>
+    </div>
+</form>

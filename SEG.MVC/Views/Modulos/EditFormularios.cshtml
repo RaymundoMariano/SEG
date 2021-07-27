@@ -1,0 +1,40 @@
+﻿@model List<Seguranca.Domain.Models.FormularioModel>
+
+@{
+    ViewData["Title"] = "EditFormularios";
+}
+
+@{
+    var modulo = (Seguranca.Domain.Models.ModuloModel)ViewBag.Modulo;
+}
+
+<h1>@modulo.Nome</h1>
+
+<form method="post">
+    <div class="form-group">
+        <div class="form-group-header">
+            <h4>Associar formulários a este módulo</h4>
+        </div>
+        <div class="form-group-body">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <div class="form-check m-1">
+                    <input type="hidden" asp-for="@Model[i].FormularioId" />
+                    <input type="hidden" asp-for="@Model[i].Nome" />
+                    <input asp-for="@Model[i].Selected" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@Model[i].Selected">
+                        @Model[i].Nome
+                    </label>
+                </div>
+            }
+        </div>
+        <div class="form-group-footer">
+            @if (!modulo.CreatedSystem)
+            {
+                <input type="submit" value="Atualizar" class="btn btn-primary" style="width:auto" />
+            }
+            <a asp-action="Edit" asp-route-id="@modulo.ModuloId"
+               class="btn btn-primary" style="width:auto">Cancelar</a>
+        </div>
+    </div>
+</form>

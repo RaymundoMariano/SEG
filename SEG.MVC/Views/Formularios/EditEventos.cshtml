@@ -1,0 +1,41 @@
+﻿@model List<Seguranca.Domain.Models.EventoModel>
+
+@{
+    ViewData["Title"] = "EditEventos";
+}
+
+@{
+    var formulario = (Seguranca.Domain.Models.FormularioModel)ViewBag.Formulario;
+}
+
+<h1>@formulario.Nome</h1>
+
+<form method="post">
+    <div class="form-group">
+        <div class="form-group-header">
+            <h4>Associar eventos a este formulário</h4>
+        </div>
+        <div class="form-group-body">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <div class="form-check m-1">
+                    <input type="hidden" asp-for="@Model[i].EventoId" />
+                    <input type="hidden" asp-for="@Model[i].Nome" />
+                    <input asp-for="@Model[i].Selected" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@Model[i].Selected">
+                        @Model[i].Nome
+                    </label>
+                </div>
+            }
+        </div>
+        <div class="form-group-footer">
+            @if (!formulario.CreatedSystem)
+            {
+                <input type="submit" value="Atualizar" class="btn btn-primary" style="width:auto" />
+            }
+            <a asp-action="Edit" 
+               asp-route-id="@formulario.FormularioId" 
+                            class="btn btn-primary" style="width:auto">Cancelar</a>
+        </div>
+    </div>
+</form>

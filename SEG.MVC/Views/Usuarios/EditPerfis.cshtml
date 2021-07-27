@@ -1,0 +1,76 @@
+﻿@model List<Seguranca.Domain.Models.PerfilUsuarioModel>
+
+@{
+    ViewData["Title"] = "EditPerfis";
+}
+
+@{
+    var usuario = (Seguranca.Domain.Models.UsuarioModel)ViewBag.Usuario;
+    var pu = usuario.PerfisUsuario.FirstOrDefault(pu => pu.UsuarioId == usuario.UsuarioId);
+}
+
+@await Html.PartialAsync("~/Views/Partial/_Usuario.cshtml", usuario)
+
+<h1>Perfis</h1>
+<form method="post">
+    <div class="form-group">
+        <div class="form-group-body">
+            <table class="table">
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => p.Modulo.Nome)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => p.Perfil.Nome)
+                        </th>
+                        <th></th>
+                    </tr>
+                    break;
+                }
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    @if (Model[i].Usuario != null)
+                    {
+                        <div class="form-group">
+                            <input type="hidden" asp-for="@Model[i].Id" />
+                            <input type="hidden" asp-for="@Model[i].UsuarioId" />
+                        </div>       
+                    }
+                    <tr>
+                        <td>
+                            <div class="form-group">
+                                <input type="hidden" asp-for="@Model[i].ModuloId" />
+                                <input type="hidden" asp-for="@Model[i].Modulo.Nome" />
+                                <label asp-for="@Model[i].Modulo.Nome">
+                                    @Model[i].Modulo.Nome
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-group">
+                                <input type="hidden" asp-for="@Model[i].PerfilId" />
+                                <input type="hidden" asp-for="@Model[i].Perfil.Nome" />
+                                @Html.DropDownListFor(modelItem => 
+                                    Model[i].Perfil.PerfilId,
+                                    new SelectList(ViewBag.Perfis, "PerfilId","Nome"),
+                                    new {@class="form-control"}
+                                )
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </table>
+        </div>
+
+        <div class="form-group-footer">
+            @if (Model != null && Model.Count != 0)
+            {
+                <input type="submit" value="Atualizar" class="btn btn-primary" style="width:auto" />
+            }
+            <a asp-action="Details" asp-route-id="@usuario.UsuarioId"
+               class="btn btn-primary" style="width:auto">Cancelar</a>
+        </div>
+    </div>
+</form>

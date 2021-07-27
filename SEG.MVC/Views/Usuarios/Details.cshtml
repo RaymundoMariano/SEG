@@ -1,0 +1,75 @@
+﻿@model Seguranca.Domain.Models.UsuarioModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+@{  
+    var seguranca = (Seguranca.Domain.Seguranca)ViewBag.Seguranca;
+    var pu = Model.PerfisUsuario.FirstOrDefault(pu => pu.UsuarioId == Model.UsuarioId);
+}
+
+@await Html.PartialAsync("~/Views/Partial/_Usuario.cshtml")
+
+<h1>Perfis</h1>
+<table class="table">
+    <thead>
+        @foreach (var item in Model.PerfisUsuario)
+        {
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => item.Modulo.Nome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => item.Perfil.Nome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => item.Perfil.Funcao.Nome)
+                </th>
+                <th></th>
+            </tr>
+
+            break;
+        }
+    </thead>
+    <tbody>
+        @foreach (var item in Model.PerfisUsuario)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(model => item.Modulo.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Perfil.Nome)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Perfil.Funcao.Nome)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            @if (seguranca.Usuario.Nome != Model.Nome && seguranca.Perfil.FuncaoId < pu.Perfil.FuncaoId)
+            {
+                <div class="form-group-footer">
+                    <a asp-controller="Usuarios" asp-action="EditPerfis"
+                       asp-route-usuarioId="@Model.UsuarioId" class="btn btn-primary">
+                           Associar perfis a este usuário
+                    </a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Voltar</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

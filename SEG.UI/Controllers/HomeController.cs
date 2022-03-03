@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using SEG.MVC.Models;
+using SEG.UI.Models;
 using System.Diagnostics;
 
-namespace SEG.MVC.Controllers
+namespace SEG.UI.Controllers
 {
     [AllowAnonymous]
     public class HomeController : Controller

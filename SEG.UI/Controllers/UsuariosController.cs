@@ -9,16 +9,16 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace SEG.MVC.Controllers
+namespace SEG.UI.Controllers
 {
     public class UsuariosController : Controller
     {
-        private Seguranca.Domain.Seguranca Seguranca
+        private Seguranca.Service.Seguranca Seguranca
         {
             get
             {
                 return JsonConvert
-                    .DeserializeObject<Seguranca.Domain.Seguranca>(User.FindFirstValue("Seguranca"));
+                    .DeserializeObject<Seguranca.Service.Seguranca>(User.FindFirstValue("Seguranca"));
             }
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
@@ -124,8 +124,8 @@ namespace SEG.MVC.Controllers
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Usuario", "Associar Restricoes");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                //var mensagem = Seguranca.TemPermissao("Usuario", "Associar Restricoes");
+                //if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
                 var result = await _usuarioClient.AtualizarRestricoesAsync(usuarioId, restricoesModel, Token);
                 if (result.Succeeded) return RedirectToAction("Edit", new { Id = usuarioId });
@@ -184,8 +184,8 @@ namespace SEG.MVC.Controllers
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Usuario", "Associar Perfil");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                //var mensagem = Seguranca.TemPermissao("Usuario", "Associar Perfil");
+                //if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
                 var result = await _usuarioClient.AtualizarPerfisAsync(usuarioId, perfisModel, Token);
                 if (result.Succeeded) return RedirectToAction("Details", new { Id = usuarioId });

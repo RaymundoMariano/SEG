@@ -12,12 +12,15 @@ namespace SEG.Client
     {
         public ModuloClient() : base("https://localhost:44366/api/modulos") { }
 
+        #region ObterFormulariosAsync
         public async Task<ResultResponse> ObterFormulariosAsync(int moduloId, string token)
         {
             base.NovaRota("/GetFormularios?moduloId=" + moduloId, token);
             return await base.Client.GetFromJsonAsync<ResultResponse>("");
         }
+        #endregion
 
+        #region AtualizarFormulariosAsync
         public async Task<ResultResponse> AtualizarFormulariosAsync(int moduloId, List<FormularioModel> formulariosModel, string token)
         {
             base.NovaRota("/PostFormularios?moduloId=" + moduloId, token);
@@ -26,5 +29,6 @@ namespace SEG.Client
             var conteudo = httpResponse.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<ResultResponse>(conteudo);
         }
+        #endregion
     }
 }

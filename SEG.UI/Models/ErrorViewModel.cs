@@ -1,4 +1,4 @@
-namespace SEG.MVC.Models
+namespace SEG.UI.Models
 {
     public class ErrorViewModel
     {

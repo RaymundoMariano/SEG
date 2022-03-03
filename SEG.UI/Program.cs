@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace SEG.MVC
+namespace SEG.UI
 {
     public class Program
     {

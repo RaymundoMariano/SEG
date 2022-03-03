@@ -10,28 +10,28 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace SEG.MVC.Controllers
+namespace SEG.UI.Controllers
 {
-    public class ModulosController : Controller
+    public class EventosController : Controller
     {
-        private Seguranca.Domain.Seguranca Seguranca
+        private Seguranca.Service.Seguranca Seguranca
         {
             get
             {
                 return JsonConvert
-                    .DeserializeObject<Seguranca.Domain.Seguranca>(User.FindFirstValue("Seguranca"));
+                    .DeserializeObject<Seguranca.Service.Seguranca>(User.FindFirstValue("Seguranca"));
             }
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IModuloClient _moduloClient;
-        public ModulosController(IModuloClient moduloClient)
+        private readonly IEventoClient _eventoClient;
+        public EventosController(IEventoClient eventoClient)
         {
-            _moduloClient = moduloClient;
+            _eventoClient = eventoClient;
         }
 
         #region Index
-        // GET: ModulosController
+        // GET: EventosController
         public async Task<ActionResult> Index()
         {
             try
@@ -39,11 +39,11 @@ namespace SEG.MVC.Controllers
                 var mensagem = Seguranca.TemPermissao();
                 if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
-                var result = await _moduloClient.ObterAsync(Token);
+                var result = await _eventoClient.ObterAsync(Token);
                 if (result.Succeeded)
                 {
-                    var modulos = JsonConvert.DeserializeObject<List<ModuloModel>>(result.ObjectRetorno.ToString());
-                    return View(modulos.FindAll(m => m.CreatedSystem == false).ToList());
+                    var eventos = JsonConvert.DeserializeObject<List<EventoModel>>(result.ObjectRetorno.ToString());
+                    return View(eventos.FindAll(e => e.CreatedSystem == false).ToList());
                 }
                 else
                     return Error(result);
@@ -56,17 +56,17 @@ namespace SEG.MVC.Controllers
         #endregion
 
         #region Details
-        // GET: ModulosController/Details/5
+        // GET: EventosController/Details/5
         [AllowAnonymous]
         public async Task<ActionResult> Details(int id)
         {
             try
             {
-                var result = await _moduloClient.ObterAsync(id, Token);
+                var result = await _eventoClient.ObterAsync(id, Token);
                 if (result.Succeeded)
                 {
-                    var modulo = JsonConvert.DeserializeObject<ModuloModel>(result.ObjectRetorno.ToString());
-                    return View(modulo);
+                    var evento = JsonConvert.DeserializeObject<EventoModel>(result.ObjectRetorno.ToString());
+                    return View(evento);
                 }
                 else
                     return Error(result);
@@ -79,29 +79,29 @@ namespace SEG.MVC.Controllers
         #endregion
 
         #region Create
-        // GET: ModulosController/Create
+        // GET: EventosController/Create
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: ModulosController/Create
+        // POST: EventosController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(ModuloModel modulo)
+        public async Task<ActionResult> Create(EventoModel evento)
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Modulo", "Incluir");
+                var mensagem = Seguranca.TemPermissao("Evento", "Incluir");
                 if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
-                var result = await _moduloClient.InsereAsync(modulo, Token);
+                var result = await _eventoClient.InsereAsync(evento, Token);
                 if (result.Succeeded) return RedirectToAction(nameof(Index));
 
                 if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
                 {
                     foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(modulo);
+                    return View(evento);
                 }
                 return Error(result);
             }
@@ -113,29 +113,29 @@ namespace SEG.MVC.Controllers
         #endregion
 
         #region Edit
-        // GET: ModulosController/Edit/5
+        // GET: EventosController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
             return await Details(id);
         }
 
-        // POST: ModulosController/Edit/5
+        // POST: EventosController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, ModuloModel modulo)
+        public async Task<ActionResult> Edit(int id, EventoModel evento)
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Modulo", "Alterar");
+                var mensagem = Seguranca.TemPermissao("Evento", "Alterar");
                 if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
-                var result = await _moduloClient.UpdateAsync(id, modulo, Token);
+                var result = await _eventoClient.UpdateAsync(id, evento, Token);
                 if (result.Succeeded) return RedirectToAction(nameof(Index));
 
                 if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
                 {
                     foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(modulo);
+                    return View(evento);
                 }
                 return Error(result);
             }
@@ -147,23 +147,23 @@ namespace SEG.MVC.Controllers
         #endregion
 
         #region Delete
-        // GET: ModulosController/Delete/5
+        // GET: EventosController/Delete/5
         public async Task<ActionResult> Delete(int id)
         {
             return await Details(id);
         }
 
-        // POST: ModulosController/Delete/5
+        // POST: EventosController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Delete(int id, ModuloModel modulo)
+        public async Task<ActionResult> Delete(int id, EventoModel evento)
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Modulo", "Excluir");
+                var mensagem = Seguranca.TemPermissao("Evento", "Excluir");
                 if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
-                var result = await _moduloClient.RemoveAsync(id, Token);
+                var result = await _eventoClient.RemoveAsync(id, Token);
                 if (result.Succeeded) return RedirectToAction(nameof(Index));
                 else
                     return Error(result);
@@ -172,50 +172,6 @@ namespace SEG.MVC.Controllers
             {
                 return Error(ETipoErro.Fatal, null);
             }
-        }
-        #endregion
-
-        #region EditFormularios
-        // GET: ModulosController/EditFormularios
-        [AllowAnonymous]
-        public async Task<ActionResult> EditFormularios(int moduloId)
-        {
-            try
-            {
-                var result = await _moduloClient.ObterAsync(moduloId, Token);
-                if (result.Succeeded)
-                {
-                    ViewBag.Modulo = JsonConvert.DeserializeObject<ModuloModel>(result.ObjectRetorno.ToString());
-                }
-                else
-                    return Error(result);
-
-                result = await _moduloClient.ObterFormulariosAsync(moduloId, Token);
-                if (result.Succeeded)
-                {
-                    var formularios = JsonConvert.DeserializeObject<List<FormularioModel>>(result.ObjectRetorno.ToString());
-                    return View(formularios.FindAll(f => f.CreatedSystem == false).ToList());
-                }
-                else
-                    return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
-
-        // GET: ModulosController/EditFormularios
-        [HttpPost]
-        public async Task<ActionResult> EditFormularios(int moduloId, List<FormularioModel> formulariosModel)
-        {
-            var mensagem = Seguranca.TemPermissao("Modulo", "Associar Formulario");
-            if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-            var result = await _moduloClient.AtualizarFormulariosAsync(moduloId, formulariosModel, Token);
-            if (result.Succeeded) return RedirectToAction("Edit", new { Id = moduloId });
-            else
-                return Error(result);
         }
         #endregion
 
@@ -239,7 +195,7 @@ namespace SEG.MVC.Controllers
             }
             else
             {
-                ViewBag.ErrorTitle = "Módulo";
+                ViewBag.ErrorTitle = "Evento";
                 ViewBag.ErrorMessage = result.Errors[0];
             }
             return View("Error");
@@ -247,3 +203,4 @@ namespace SEG.MVC.Controllers
         #endregion
     }
 }
+

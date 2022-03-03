@@ -10,14 +10,13 @@ using Seguranca.Domain.Aplication.Responses;
 using Seguranca.Domain.Auth.Requests;
 using Seguranca.Domain.Auth.Responses;
 using Seguranca.Domain.Enums;
-using Seguranca.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace SEG.MVC.Controllers.Auth
+namespace SEG.UI.Controllers.Auth
 {
     [AllowAnonymous]
     public class ContaController : Controller
@@ -142,64 +141,37 @@ namespace SEG.MVC.Controllers.Auth
 
         private async Task<bool> Login(RegisterResponse register, string title)
         {
-            Seguranca.Domain.Seguranca seguranca;
+            Seguranca.Service.Seguranca seguranca;
             try
             {
-                seguranca = await NewInstance(register, title);
+                seguranca = new Seguranca.Service.Seguranca(
+                    register.Seguranca.Usuario, register.Seguranca.Modulo, register.Seguranca.Perfil);
+
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, register.UserName),
+                    new Claim(ClaimTypes.Email, register.Email),
+                    new Claim(ClaimTypes.Role, "Usuario_Comum"),
+                    new Claim("Token", register.Token),
+                    new Claim("Seguranca", JsonConvert.SerializeObject(seguranca))
+                };
+
+                var identity = new ClaimsIdentity(claims, "Login");
+                ClaimsPrincipal claimPrincipal = new ClaimsPrincipal(identity);
+
+                var auth = new AuthenticationProperties
+                {
+                    AllowRefresh = true,
+                    ExpiresUtc = DateTime.Now.ToLocalTime().AddHours(2),
+                    IsPersistent = true
+                };
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimPrincipal, auth);
+
+                return true;
             }
-            catch (Exception) { return false; }  
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, register.UserName),
-                new Claim(ClaimTypes.Email, register.Email),
-                new Claim(ClaimTypes.Role, "Usuario_Comum"),
-                new Claim("Token", register.Token),
-                new Claim("Seguranca", JsonConvert.SerializeObject(seguranca))
-            };
-
-            var identity = new ClaimsIdentity(claims, "Login");
-            ClaimsPrincipal claimPrincipal = new ClaimsPrincipal(identity);
-
-            var auth = new AuthenticationProperties
-            {
-                AllowRefresh = true,
-                ExpiresUtc = DateTime.Now.ToLocalTime().AddHours(2),
-                IsPersistent = true
-            };
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimPrincipal, auth);
-
-            return true;
+            catch (Exception) { return false; }
         }
-
-        #region NewInstance
-        private async Task<Seguranca.Domain.Seguranca> NewInstance(RegisterResponse register, string title)
-        {
-            try
-            {
-                var usuario = new UsuarioModel();
-                var result = await _usuarioClient.ObterAsync(register.Seguranca.UsuarioId, register.Token);
-                if (!result.Succeeded) Error(result, title);
-
-                usuario = JsonConvert.DeserializeObject<UsuarioModel>(result.ObjectRetorno.ToString());
-
-                var modulo = new ModuloModel();
-                result = await _moduloClient.ObterAsync(register.Seguranca.ModuloId, register.Token);
-                if (!result.Succeeded) Error(result, title);
-                
-                modulo = JsonConvert.DeserializeObject<ModuloModel>(result.ObjectRetorno.ToString());
-
-                var perfil = new PerfilModel();
-                result = await _perfilClient.ObterAsync(register.Seguranca.PerfilId, register.Token);
-                if (!result.Succeeded) Error(result, title);
-                
-                perfil = JsonConvert.DeserializeObject<PerfilModel>(result.ObjectRetorno.ToString());
-
-                return new Seguranca.Domain.Seguranca(usuario, modulo, perfil);
-            }catch (Exception) { throw; }
-        }
-        #endregion
 
         #region Error
         private void Error(ResultResponse result, string title)

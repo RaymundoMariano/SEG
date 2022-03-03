@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace SEG.MVC.Controllers
+namespace SEG.UI.Controllers
 {
     public class ErrorController : Controller
     {

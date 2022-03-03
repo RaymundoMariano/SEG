@@ -10,28 +10,28 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace SEG.MVC.Controllers
+namespace SEG.UI.Controllers
 {
-    public class FormulariosController : Controller
+    public class ModulosController : Controller
     {
-        private Seguranca.Domain.Seguranca Seguranca
+        private Seguranca.Service.Seguranca Seguranca
         {
             get
             {
                 return JsonConvert
-                    .DeserializeObject<Seguranca.Domain.Seguranca>(User.FindFirstValue("Seguranca"));
+                    .DeserializeObject<Seguranca.Service.Seguranca>(User.FindFirstValue("Seguranca"));
             }
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IFormularioClient _formularioClient;
-        public FormulariosController(IFormularioClient formularioClient)
+        private readonly IModuloClient _moduloClient;
+        public ModulosController(IModuloClient moduloClient)
         {
-            _formularioClient = formularioClient;
+            _moduloClient = moduloClient;
         }
 
         #region Index
-        // GET: FormulariosController
+        // GET: ModulosController
         public async Task<ActionResult> Index()
         {
             try
@@ -39,7 +39,158 @@ namespace SEG.MVC.Controllers
                 var mensagem = Seguranca.TemPermissao();
                 if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
-                var result = await _formularioClient.ObterAsync(Token);
+                var result = await _moduloClient.ObterAsync(Token);
+                if (result.Succeeded)
+                {
+                    var modulos = JsonConvert.DeserializeObject<List<ModuloModel>>(result.ObjectRetorno.ToString());
+                    return View(modulos.FindAll(m => m.CreatedSystem == false).ToList());
+                }
+                else
+                    return Error(result);
+            }
+            catch
+            {
+                return Error(ETipoErro.Fatal, null);
+            }
+        }
+        #endregion
+
+        #region Details
+        // GET: ModulosController/Details/5
+        [AllowAnonymous]
+        public async Task<ActionResult> Details(int id)
+        {
+            try
+            {
+                var result = await _moduloClient.ObterAsync(id, Token);
+                if (result.Succeeded)
+                {
+                    var modulo = JsonConvert.DeserializeObject<ModuloModel>(result.ObjectRetorno.ToString());
+                    return View(modulo);
+                }
+                else
+                    return Error(result);
+            }
+            catch
+            {
+                return Error(ETipoErro.Fatal, null);
+            }
+        }
+        #endregion
+
+        #region Create
+        // GET: ModulosController/Create
+        public ActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: ModulosController/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Create(ModuloModel modulo)
+        {
+            try
+            {
+                var mensagem = Seguranca.TemPermissao("Modulo", "Incluir");
+                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+
+                var result = await _moduloClient.InsereAsync(modulo, Token);
+                if (result.Succeeded) return RedirectToAction(nameof(Index));
+
+                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
+                {
+                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
+                    return View(modulo);
+                }
+                return Error(result);
+            }
+            catch
+            {
+                return Error(ETipoErro.Fatal, null);
+            }
+        }
+        #endregion
+
+        #region Edit
+        // GET: ModulosController/Edit/5
+        public async Task<ActionResult> Edit(int id)
+        {
+            return await Details(id);
+        }
+
+        // POST: ModulosController/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Edit(int id, ModuloModel modulo)
+        {
+            try
+            {
+                var mensagem = Seguranca.TemPermissao("Modulo", "Alterar");
+                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+
+                var result = await _moduloClient.UpdateAsync(id, modulo, Token);
+                if (result.Succeeded) return RedirectToAction(nameof(Index));
+
+                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
+                {
+                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
+                    return View(modulo);
+                }
+                return Error(result);
+            }
+            catch
+            {
+                return Error(ETipoErro.Fatal, null);
+            }
+        }
+        #endregion
+
+        #region Delete
+        // GET: ModulosController/Delete/5
+        public async Task<ActionResult> Delete(int id)
+        {
+            return await Details(id);
+        }
+
+        // POST: ModulosController/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Delete(int id, ModuloModel modulo)
+        {
+            try
+            {
+                var mensagem = Seguranca.TemPermissao("Modulo", "Excluir");
+                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+
+                var result = await _moduloClient.RemoveAsync(id, Token);
+                if (result.Succeeded) return RedirectToAction(nameof(Index));
+                else
+                    return Error(result);
+            }
+            catch
+            {
+                return Error(ETipoErro.Fatal, null);
+            }
+        }
+        #endregion
+
+        #region EditFormularios
+        // GET: ModulosController/EditFormularios
+        [AllowAnonymous]
+        public async Task<ActionResult> EditFormularios(int moduloId)
+        {
+            try
+            {
+                var result = await _moduloClient.ObterAsync(moduloId, Token);
+                if (result.Succeeded)
+                {
+                    ViewBag.Modulo = JsonConvert.DeserializeObject<ModuloModel>(result.ObjectRetorno.ToString());
+                }
+                else
+                    return Error(result);
+
+                result = await _moduloClient.ObterFormulariosAsync(moduloId, Token);
                 if (result.Succeeded)
                 {
                     var formularios = JsonConvert.DeserializeObject<List<FormularioModel>>(result.ObjectRetorno.ToString());
@@ -53,168 +204,16 @@ namespace SEG.MVC.Controllers
                 return Error(ETipoErro.Fatal, null);
             }
         }
-        #endregion
 
-        #region Details
-        // GET: FormulariosController/Details/5
-        [AllowAnonymous]
-        public async Task<ActionResult> Details(int id)
-        {
-            try
-            {
-                var result = await _formularioClient.ObterAsync(id, Token);
-                if (result.Succeeded)
-                {
-                    var formulario = JsonConvert.DeserializeObject<FormularioModel>(result.ObjectRetorno.ToString());
-                    return View(formulario);
-                }
-                else
-                    return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
-        #endregion
-
-        #region Create
-        // GET: FormulariosController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: FormulariosController/Create
+        // GET: ModulosController/EditFormularios
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(FormularioModel formulario)
+        public async Task<ActionResult> EditFormularios(int moduloId, List<FormularioModel> formulariosModel)
         {
-            try
-            {
-                var mensagem = Seguranca.TemPermissao("Formulario", "Incluir");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _formularioClient.InsereAsync(formulario, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-
-                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
-                {
-                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(formulario);
-                }
-                return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
-        #endregion
-
-        #region Edit
-        // GET: FormulariosController/Edit/5
-        public async Task<ActionResult> Edit(int id)
-        {
-            return await Details(id);
-        }
-
-        // POST: FormulariosController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, FormularioModel formulario)
-        {
-            try
-            {
-                var mensagem = Seguranca.TemPermissao("Formulario", "Alterar");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _formularioClient.UpdateAsync(id, formulario, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-
-                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
-                {
-                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(formulario);
-                }
-                return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
-        #endregion
-
-        #region Delete
-        // GET: FormulariosController/Delete/5
-        public async Task<ActionResult> Delete(int id)
-        {
-            return await Details(id);
-        }
-
-        // POST: FormulariosController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Delete(int id, FormularioModel formulario)
-        {
-            try
-            {
-                var mensagem = Seguranca.TemPermissao("Formulario", "Excluir");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _formularioClient.RemoveAsync(id, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-                else
-                    return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
-        #endregion
-
-        #region EditEventos
-        // GET: FormulariosController/EditEventos
-        [AllowAnonymous]
-        public async Task<ActionResult> EditEventos(int formularioId)
-        {
-            try
-            {
-                var result = await _formularioClient.ObterAsync(formularioId, Token);
-                if (result.Succeeded)
-                {
-                    ViewBag.Formulario = JsonConvert.DeserializeObject<FormularioModel>(result.ObjectRetorno.ToString());
-                }
-                else
-                    return Error(result);
-
-                result = await _formularioClient.ObterEventosAsync(formularioId, Token);
-                if (result.Succeeded)
-                {
-                    var eventos = JsonConvert.DeserializeObject<List<EventoModel>>(result.ObjectRetorno.ToString());
-                    return View(eventos);
-                }
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-                else
-                    return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
-
-        // GET: FormulariosController/EditEventos
-        [HttpPost]
-        public async Task<ActionResult> EditEventos(int formularioId, List<EventoModel> eventosModel)
-        {
-            var mensagem = Seguranca.TemPermissao("Formulario", "Associar Evento");
+            var mensagem = Seguranca.TemPermissao("Modulo", "Associar Formulario");
             if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
-            var result = await _formularioClient.AtualizarEventosAsync(formularioId, eventosModel, Token);
-            if (result.Succeeded) return RedirectToAction("Edit", new { Id = formularioId });
+            var result = await _moduloClient.AtualizarFormulariosAsync(moduloId, formulariosModel, Token);
+            if (result.Succeeded) return RedirectToAction("Edit", new { Id = moduloId });
             else
                 return Error(result);
         }
@@ -240,7 +239,7 @@ namespace SEG.MVC.Controllers
             }
             else
             {
-                ViewBag.ErrorTitle = "Formulário";
+                ViewBag.ErrorTitle = "Módulo";
                 ViewBag.ErrorMessage = result.Errors[0];
             }
             return View("Error");
@@ -248,4 +247,3 @@ namespace SEG.MVC.Controllers
         #endregion
     }
 }
-

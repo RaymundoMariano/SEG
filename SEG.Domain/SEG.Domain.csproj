@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <Reference Include="Seguranca.Domain">
-      <HintPath>..\..\..\GitHub\Seguranca\Seguranca.Domain\bin\Debug\net5.0\Seguranca.Domain.dll</HintPath>
+      <HintPath>..\..\Seguranca\Seguranca.API\bin\Debug\net5.0\Seguranca.Domain.dll</HintPath>
     </Reference>
   </ItemGroup>
 

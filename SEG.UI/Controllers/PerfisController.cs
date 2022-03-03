@@ -10,16 +10,16 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace SEG.MVC.Controllers
+namespace SEG.UI.Controllers
 {
     public class PerfisController : Controller
     {
-        private Seguranca.Domain.Seguranca Seguranca
+        private Seguranca.Service.Seguranca Seguranca
         {
             get
             {
                 return JsonConvert
-                    .DeserializeObject<Seguranca.Domain.Seguranca>(User.FindFirstValue("Seguranca"));
+                    .DeserializeObject<Seguranca.Service.Seguranca>(User.FindFirstValue("Seguranca"));
             }
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
@@ -238,7 +238,7 @@ namespace SEG.MVC.Controllers
         [HttpPost]
         public async Task<ActionResult> EditRestricoes(int perfilId, List<RestricaoPerfilModel> restricoesModel)
         {
-            var mensagem =  Seguranca.TemPermissao("Perfil", "Associar Restricoes");
+            var mensagem = Seguranca.TemPermissao("Perfil", "Associar Restricoes");
             if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
             var result = await _perfilClient.AtualizarRestricoesAsync(perfilId, restricoesModel, User.FindFirstValue("Token"));

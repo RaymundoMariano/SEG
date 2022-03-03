@@ -2,6 +2,7 @@
 using SEG.Domain.Contracts.Clients;
 using Seguranca.Domain.Aplication.Responses;
 using Seguranca.Domain.Models;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
@@ -11,6 +12,7 @@ namespace SEG.Client
     {
         public Client(string uri) : base(uri) { }
 
+        #region ObterAsync
         public async Task<ResultResponse> ObterAsync(string token)
         {
             base.NovaRota("", token);
@@ -22,32 +24,38 @@ namespace SEG.Client
             base.NovaRota("/" + id, token);
             return await base.Client.GetFromJsonAsync<ResultResponse>("");
         }
+        #endregion
 
+        #region InsereAsync
         public async Task<ResultResponse> InsereAsync(T model, string token)
         {
             base.NovaRota("", token);
-            var httpResponse = await base.Client.PostAsJsonAsync("", model);
-
-            var conteudo = httpResponse.Content.ReadAsStringAsync().Result;
-            return JsonConvert.DeserializeObject<ResultResponse>(conteudo);
+            return Deserialize(await base.Client.PostAsJsonAsync("", model));
         }
+        #endregion
 
+        #region UpdateAsync
         public async Task<ResultResponse> UpdateAsync(int id, T model, string token)
         {
             base.NovaRota("/" + id, token);
-            var httpResponse = await base.Client.PutAsJsonAsync<T>("", model);
-
-            var conteudo = httpResponse.Content.ReadAsStringAsync().Result;
-            return JsonConvert.DeserializeObject<ResultResponse>(conteudo);
+            return Deserialize(await base.Client.PutAsJsonAsync<T>("", model));
         }
+        #endregion
 
+        #region RemoveAsync
         public async Task<ResultResponse> RemoveAsync(int id, string token)
         {
             base.NovaRota("/" + id, token);
-            var httpResponse = await base.Client.DeleteAsync("");
+            return Deserialize(await base.Client.DeleteAsync(""));
+        }
+        #endregion
 
+        #region Deserialize
+        private ResultResponse Deserialize(HttpResponseMessage httpResponse)
+        {
             var conteudo = httpResponse.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<ResultResponse>(conteudo);
         }
+        #endregion
     }
 }

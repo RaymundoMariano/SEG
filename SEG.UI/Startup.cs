@@ -11,9 +11,8 @@ using SEG.Client;
 using SEG.Client.Auth;
 using SEG.Domain.Contracts.Clients;
 using SEG.Domain.Contracts.Clients.Auth;
-using System;
 
-namespace SEG.MVC
+namespace SEG.UI
 {
     public class Startup
     {
@@ -34,7 +33,7 @@ namespace SEG.MVC
             services.AddTransient<IPerfilClient, PerfilClient>();
             services.AddTransient<IFuncaoClient, FuncaoClient>();
             services.AddTransient<IUsuarioClient, UsuarioClient>();
-            
+
             services.AddTransient<IRegisterClient, RegisterClient>();
             services.AddTransient<ILoginClient, LoginClient>();
             services.AddTransient<ITrocaSenhaClient, TrocaSenhaClient>();

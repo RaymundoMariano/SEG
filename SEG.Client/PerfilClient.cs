@@ -12,12 +12,15 @@ namespace SEG.Client
     {
         public PerfilClient() : base("https://localhost:44366/api/perfis") { }
 
+        #region ObterRestricoesAsync
         public async Task<ResultResponse> ObterRestricoesAsync(int perfilId, string token)
         {
             base.NovaRota("/GetRestricoes?perfilId=" + perfilId, token);
             return await base.Client.GetFromJsonAsync<ResultResponse>("");
         }
+        #endregion
 
+        #region AtualizarRestricoesAsync
         public async Task<ResultResponse> AtualizarRestricoesAsync(int perfilId, List<RestricaoPerfilModel> restricoesModel, string token)
         {
             base.NovaRota("/PostRestricoes?perfilId=" + perfilId, token);
@@ -26,5 +29,6 @@ namespace SEG.Client
             var conteudo = httpResponse.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<ResultResponse>(conteudo);
         }
+        #endregion
     }
 }

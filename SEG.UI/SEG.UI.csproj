@@ -7,15 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SEG.Client\SEG.Client.csproj" />
     <ProjectReference Include="..\SEG.Domain\SEG.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Seguranca.Domain">
-      <HintPath>..\..\..\GitHub\Seguranca\Seguranca.Domain\bin\Debug\net5.0\Seguranca.Domain.dll</HintPath>
-    </Reference>
-    <Reference Include="Seguranca.Service">
-      <HintPath>..\..\Seguranca\Seguranca.Service\bin\Debug\net5.0\Seguranca.Service.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\SEG.Service\SEG.Service.csproj" />
   </ItemGroup>
 
 </Project>

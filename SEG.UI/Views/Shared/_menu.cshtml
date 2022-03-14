@@ -33,12 +33,10 @@
 			<ul class="navbar-nav ml-auto">
 				@if (User.Identity.IsAuthenticated)
 				{
-					var seguranca = Newtonsoft.Json.JsonConvert
-						.DeserializeObject<Seguranca.Service.Seguranca>(User.Claims.First(c => 
-							c.Type == "Seguranca").Value);
 					<li class="nav-item dropdown">
 						<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-							@User.Identity.Name - @seguranca.Perfil.Nome
+							@using System.Security.Claims;
+							@User.Identity.Name - @User.FindFirstValue("Perfil")
 						</a>
 						<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
 							<a class="dropdown-item" href="@Url.Action("TrocaSenha", "Conta")">Trocar Senha</a>

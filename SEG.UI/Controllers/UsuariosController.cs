@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SEG.Domain.Contracts.Clients;
-using Seguranca.Domain.Aplication.Responses;
-using Seguranca.Domain.Enums;
-using Seguranca.Domain.Models;
+using SEG.Domain.Enums;
+using SEG.Domain.Models.Aplicacao;
+using SEG.Domain.Models.Response;
+using SEG.Service;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -13,19 +14,18 @@ namespace SEG.UI.Controllers
 {
     public class UsuariosController : Controller
     {
-        private Seguranca.Service.Seguranca Seguranca
+        private Seguranca Seguranca
         {
             get
             {
-                return JsonConvert
-                    .DeserializeObject<Seguranca.Service.Seguranca>(User.FindFirstValue("Seguranca"));
+                return JsonConvert.DeserializeObject<Seguranca>(User.FindFirstValue("Seguranca"));
             }
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IUsuarioClient _usuarioClient;
-        private readonly IPerfilClient _perfilClient;
-        public UsuariosController(IUsuarioClient usuarioClient, IPerfilClient perfilClient)
+        private readonly IUsuarioAplication _usuarioClient;
+        private readonly IPerfilAplication _perfilClient;
+        public UsuariosController(IUsuarioAplication usuarioClient, IPerfilAplication perfilClient)
         {
             _usuarioClient = usuarioClient;
             _perfilClient = perfilClient;
@@ -184,8 +184,8 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                //var mensagem = Seguranca.TemPermissao("Usuario", "Associar Perfil");
-                //if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                var mensagem = Seguranca.TemPermissao("Usuario", "Associar Perfil");
+                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
 
                 var result = await _usuarioClient.AtualizarPerfisAsync(usuarioId, perfisModel, Token);
                 if (result.Succeeded) return RedirectToAction("Details", new { Id = usuarioId });
@@ -202,7 +202,7 @@ namespace SEG.UI.Controllers
         #region Error
         private ActionResult Error(ETipoErro eTipoErro, string mensagem)
         {
-            return Error(new ResultResponse()
+            return Error(new ResultModel()
             {
                 ObjectResult = (eTipoErro == ETipoErro.Fatal)
                     ? (int)EObjectResult.ErroFatal
@@ -211,7 +211,7 @@ namespace SEG.UI.Controllers
             });
         }
 
-        private ActionResult Error(ResultResponse result)
+        private ActionResult Error(ResultModel result)
         {
             if (result.ObjectResult == (int)EObjectResult.ErroFatal)
             {

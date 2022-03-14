@@ -8,9 +8,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SEG.Client;
-using SEG.Client.Auth;
+using SEG.Client.Aplicacao;
+using SEG.Client.Autenticacao;
+using SEG.Client.Seguranca;
+using SEG.Domain.Contracts.Autenticacao;
 using SEG.Domain.Contracts.Clients;
-using SEG.Domain.Contracts.Clients.Auth;
+using SEG.Domain.Contracts.Seguranca;
+using System;
 
 namespace SEG.UI
 {
@@ -26,30 +30,30 @@ namespace SEG.UI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Injeção de dependência services
-            services.AddTransient<IEventoClient, EventoClient>();
-            services.AddTransient<IFormularioClient, FormularioClient>();
-            services.AddTransient<IModuloClient, ModuloClient>();
-            services.AddTransient<IPerfilClient, PerfilClient>();
-            services.AddTransient<IFuncaoClient, FuncaoClient>();
-            services.AddTransient<IUsuarioClient, UsuarioClient>();
+            //Serviços da Aplicacao
+            services.AddTransient<IEventoAplication, EventoAplication>();
+            services.AddTransient<IFormularioAlication, FormularioAplication>();
+            services.AddTransient<IModuloAplication, ModuloAplication>();
+            services.AddTransient<IPerfilAplication, PerfilAplication>();
+            services.AddTransient<IFuncaoAplication, FuncaoAplicaton>();
+            services.AddTransient<IUsuarioAplication, UsuarioAplication>();
 
-            services.AddTransient<IRegisterClient, RegisterClient>();
-            services.AddTransient<ILoginClient, LoginClient>();
-            services.AddTransient<ITrocaSenhaClient, TrocaSenhaClient>();
+            //Serviços do Autenticador
+            services.AddTransient<IRegisterAuthentication, RegisterAuthentication>();
+            services.AddTransient<ILoginAuthentication, LoginAuthentication>();
+            services.AddTransient<ITrocaSenhaAuthentication, TrocaSenhaAuthentication>();
 
-            services.AddControllersWithViews();
-            services.AddRazorPages();
+            //Serviços do Seguranca
+            services.AddTransient<IUsuarioSecurity, UsuarioSecurity>();
 
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
-
-            //Adicionando o serviço de cookies na aplicação
+            //Serviço de cookie na aplicação
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options => options.LoginPath = "/Conta/Login");
+                .AddCookie(options =>
+                {
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+                    options.SlidingExpiration = true;
+                    options.LoginPath = "/Conta/Login";
+                });
 
             //Todos os controllers protegidos contra acesso anônimo 
             services.AddControllersWithViews(config =>
@@ -59,6 +63,9 @@ namespace SEG.UI
                        .Build();
                 config.Filters.Add(new AuthorizeFilter(policy));
             });
+
+            services.AddControllersWithViews();
+            services.AddRazorPages();            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

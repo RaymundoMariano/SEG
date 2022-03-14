@@ -1,11 +1,11 @@
-﻿@model Seguranca.Domain.Models.UsuarioModel
+﻿@model SEG.Domain.Models.Aplicacao.UsuarioModel
 
 @{
     ViewData["Title"] = "Details";
 }
 
 @{  
-    var seguranca = (Seguranca.Service.Seguranca)ViewBag.Seguranca;
+    var seguranca = (SEG.Service.Seguranca)ViewBag.Seguranca;
     var pu = Model.PerfisUsuario.FirstOrDefault(pu => pu.UsuarioId == Model.UsuarioId);
 }
 
@@ -53,7 +53,8 @@
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
-            @if (seguranca.Usuario.Nome != Model.Nome && seguranca.Perfil.FuncaoId < pu.Perfil.FuncaoId)
+            @if ((seguranca.Perfil.Nome == "Master") ||
+               (seguranca.Usuario.Nome != Model.Nome && seguranca.Perfil.FuncaoId < pu.Perfil.FuncaoId))
             {
                 <div class="form-group-footer">
                     <a asp-controller="Usuarios" asp-action="EditPerfis"

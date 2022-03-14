@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SEG.Domain.Contracts.Clients;
-using Seguranca.Domain.Aplication.Responses;
-using Seguranca.Domain.Enums;
-using Seguranca.Domain.Models;
+using SEG.Domain.Enums;
+using SEG.Domain.Models.Aplicacao;
+using SEG.Domain.Models.Response;
+using SEG.Service;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -14,18 +15,17 @@ namespace SEG.UI.Controllers
 {
     public class FormulariosController : Controller
     {
-        private Seguranca.Service.Seguranca Seguranca
+        private Seguranca Seguranca
         {
             get
             {
-                return JsonConvert
-                    .DeserializeObject<Seguranca.Service.Seguranca>(User.FindFirstValue("Seguranca"));
+                return JsonConvert.DeserializeObject<Seguranca>(User.FindFirstValue("Seguranca"));
             }
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IFormularioClient _formularioClient;
-        public FormulariosController(IFormularioClient formularioClient)
+        private readonly IFormularioAlication _formularioClient;
+        public FormulariosController(IFormularioAlication formularioClient)
         {
             _formularioClient = formularioClient;
         }
@@ -223,7 +223,7 @@ namespace SEG.UI.Controllers
         #region Error
         private ActionResult Error(ETipoErro eTipoErro, string mensagem)
         {
-            return Error(new ResultResponse()
+            return Error(new ResultModel()
             {
                 ObjectResult = (eTipoErro == ETipoErro.Fatal)
                     ? (int)EObjectResult.ErroFatal
@@ -232,7 +232,7 @@ namespace SEG.UI.Controllers
             });
         }
 
-        private ActionResult Error(ResultResponse result)
+        private ActionResult Error(ResultModel result)
         {
             if (result.ObjectResult == (int)EObjectResult.ErroFatal)
             {

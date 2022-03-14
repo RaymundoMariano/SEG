@@ -280,3 +280,13 @@ SEG.UI/obj/project.assets.json
 SEG.UI/obj/SEG.UI.csproj.nuget.dgspec.json
 SEG.UI/obj/SEG.UI.csproj.nuget.g.props
 SEG.UI/obj/SEG.UI.csproj.nuget.g.targets
+SEG.Service/bin/Debug/net5.0/SEG.Service.deps.json
+SEG.Service/obj/Debug/net5.0/.NETCoreApp,Version=v5.0.AssemblyAttributes.cs
+SEG.Service/obj/Debug/net5.0/SEG.Service.AssemblyInfo.cs
+SEG.Service/obj/Debug/net5.0/SEG.Service.csproj.CopyComplete
+SEG.Service/obj/Debug/net5.0/SEG.Service.csproj.FileListAbsolute.txt
+SEG.Service/obj/Debug/net5.0/SEG.Service.GeneratedMSBuildEditorConfig.editorconfig
+SEG.Service/obj/project.assets.json
+SEG.Service/obj/SEG.Service.csproj.nuget.dgspec.json
+SEG.Service/obj/SEG.Service.csproj.nuget.g.props
+SEG.Service/obj/SEG.Service.csproj.nuget.g.targets

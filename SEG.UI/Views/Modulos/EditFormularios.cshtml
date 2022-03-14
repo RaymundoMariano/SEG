@@ -1,11 +1,11 @@
-﻿@model List<Seguranca.Domain.Models.FormularioModel>
+﻿@model List<SEG.Domain.Models.Aplicacao.FormularioModel>
 
 @{
     ViewData["Title"] = "EditFormularios";
 }
 
 @{
-    var modulo = (Seguranca.Domain.Models.ModuloModel)ViewBag.Modulo;
+    var modulo = (SEG.Domain.Models.Aplicacao.ModuloModel)ViewBag.Modulo;
 }
 
 <h1>@modulo.Nome</h1>

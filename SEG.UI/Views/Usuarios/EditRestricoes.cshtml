@@ -1,11 +1,11 @@
-﻿@model List<Seguranca.Domain.Models.RestricaoUsuarioModel>
+﻿@model List<SEG.Domain.Models.Aplicacao.RestricaoUsuarioModel>
 
 @{
     ViewData["Title"] = "EditRestricoes";
 }
 
 @{
-    var usuario = (Seguranca.Domain.Models.UsuarioModel)ViewBag.Usuario;
+    var usuario = (SEG.Domain.Models.Aplicacao.UsuarioModel)ViewBag.Usuario;
     var pu = usuario.PerfisUsuario.FirstOrDefault(pu => pu.UsuarioId == usuario.UsuarioId);
 }
 

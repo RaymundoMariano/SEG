@@ -1,11 +1,11 @@
-﻿@model Seguranca.Domain.Models.PerfilModel
+﻿@model SEG.Domain.Models.Aplicacao.PerfilModel
 
 @{
     ViewData["Title"] = "Delete";
 }
 
 @{
-    var seguranca = (Seguranca.Service.Seguranca)ViewBag.Seguranca;
+    var seguranca = (SEG.Service.Seguranca)ViewBag.Seguranca;
     var pu = Model.PerfisUsuario.FirstOrDefault(pu => pu.Usuario.Nome == seguranca.Usuario.Nome);
     var nomeUsuario = pu == null ? null : pu.Usuario.Nome;
 }

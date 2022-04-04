@@ -8,13 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using SEG.Domain.Contracts.Autenticacao;
-using SEG.Domain.Contracts.Seguranca;
 using SEG.Domain.Models.Response;
 using SEG.Domain.Models.Autenticacao;
-using SEG.Domain.Models.Aplicacao;
-using SEG.Service;
-using SEG.Domain.Enums;
+using SEG.Domain;
+using SEG.Domain.Contracts.Clients.Autenticacao;
+using SEG.Domain.Contracts.Clients.Seguranca;
+using SEG.Client;
 
 namespace SEG.UI.Controllers.Autenticacao
 {
@@ -29,58 +28,55 @@ namespace SEG.UI.Controllers.Autenticacao
             }
         }
         private string Email { get { return User.FindFirst(ClaimTypes.Email).Value; } }
-        private readonly IRegisterAuthentication _register;
-        private readonly ILoginAuthentication _login;
-        private readonly IUsuarioSecurity _usuario;
-        private readonly ITrocaSenhaAuthentication _trocaSenha;
-        public ContaController(IRegisterAuthentication register
-            , ILoginAuthentication login
-            , ITrocaSenhaAuthentication trocaSenha
-            , IUsuarioSecurity usuario)
+
+        private readonly IAutenticacaoClient _autenticacaoClient;
+        private readonly ISegurancaClient _segurancaClient;
+        public ContaController(IAutenticacaoClient autenticacaoClient, ISegurancaClient segurancaClient)
         {
-            _register = register;
-            _login = login;
-            _trocaSenha = trocaSenha;
-            _usuario = usuario;
+            _autenticacaoClient = autenticacaoClient;
+            _segurancaClient = segurancaClient;
         }
 
         #region Register
+        [HttpGet]
         public ActionResult Register()
         {
             return View();
         }
 
         [HttpPost]
-        public async Task<ActionResult> Register(Domain.Models.Autenticacao.RegisterModel register)
+        public async Task<ActionResult> Register(RegisterModel register)
         {
-            var result = await _register.RegisterAsync(register);
-
-            foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-
-            if (ModelState.IsValid)
+            var registro = new RegistroModel();
+            try
             {
-                var reg = JsonConvert.DeserializeObject<Domain.Models.Response.RegisterModel>(result.ObjectRetorno.ToString());
-
-                var usuario = new UsuarioModel()
-                {
-                    Email = register.Email,
-                    Nome = register.Nome
-                };
-
-                result = await _usuario.ObterPerfilAsync("SegurancaNet", usuario, reg.Token);
-
-                foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-
                 if (ModelState.IsValid)
                 {
-                    reg.Seguranca = JsonConvert.DeserializeObject<SegurancaModel>(result.ObjectRetorno.ToString());
+                    registro = await _autenticacaoClient.RegisterAsync(register);
 
-                    if (!await Login(reg, "Register")) return View("Error");
+                    foreach (var erro in registro.Errors) { ModelState.AddModelError("UserName", erro); }
+
+                    if (ModelState.IsValid)
+                    {
+                        registro.Seguranca = await _segurancaClient.ObterPerfilAsync("SegurancaNet", registro);
+                        
+                        if (!await Autenticado(registro, "Register")) return View("Error");
+                    }
+                    else
+                    {
+                        return View(register);
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
-
-                return RedirectToAction("Index", "Home");
+                return View(register);
             }
-            return View(register);
+            catch (ClientException ex)
+            {
+                ModelState.AddModelError("UserName", ex.Message);
+                return View(register);
+            }
+            catch (Exception) { return Error(null, null); }
         }
         #endregion
 
@@ -97,38 +93,41 @@ namespace SEG.UI.Controllers.Autenticacao
         [HttpPost]
         public async Task<ActionResult> Login(LoginModel login)
         {
-            var result = await _login.LoginAsync(login);
-
-            foreach (var erro in result.Errors) { ModelState.AddModelError("Email", erro); }
-
-            if (ModelState.IsValid)
+            var registro = new RegistroModel();
+            try
             {
-                var register = JsonConvert.DeserializeObject<Domain.Models.Response.RegisterModel>(result.ObjectRetorno.ToString());
-                
-                var usuario = new UsuarioModel()
-                {
-                    Email = register.Email,
-                    Nome = register.Nome
-                };
-
-                result = await _usuario.ObterPerfilAsync("SegurancaNet", usuario, register.Token);
-
-                foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-
                 if (ModelState.IsValid)
                 {
-                    register.Seguranca = JsonConvert.DeserializeObject<SegurancaModel>(result.ObjectRetorno.ToString());
+                    registro = await _autenticacaoClient.LoginAsync(login);
 
-                    if (!await Login(register, "Login")) return View("Error");
-                }
+                    foreach (var erro in registro.Errors) { ModelState.AddModelError("Email", erro); }
 
-                if (!string.IsNullOrEmpty(login.ReturnUrl) && Url.IsLocalUrl(login.ReturnUrl))
-                {
-                    return Redirect(login.ReturnUrl);
+                    if (ModelState.IsValid)
+                    {
+                        registro.Seguranca = await _segurancaClient.ObterPerfilAsync("SegurancaNet", registro);
+
+                        if (!await Autenticado(registro, "Login")) return View("Error");
+                    }
+                    else
+                    {
+                        return View(login);
+                    }
+
+                    if (!string.IsNullOrEmpty(login.ReturnUrl) && Url.IsLocalUrl(login.ReturnUrl))
+                    {
+                        return Redirect(login.ReturnUrl);
+                    }
+
+                    return RedirectToAction("Index", "Home");
                 }
-                return RedirectToAction("Index", "Home");
+                return View(login);
             }
-            return View(login);
+            catch (ClientException ex)
+            {
+                ModelState.AddModelError("Email", ex.Message);
+                return View(login);
+            }
+            catch (Exception) { return Error(null, null); }
         }
         #endregion
 
@@ -142,18 +141,26 @@ namespace SEG.UI.Controllers.Autenticacao
         [HttpPost]
         public async Task<ActionResult> TrocaSenha(TrocaSenhaModel trocaSenha)
         {
-            if (trocaSenha.NovaSenha != trocaSenha.ConfirmeSenha)
+            trocaSenha.Email = Email;
+
+            try
             {
-                ModelState.AddModelError("NovaSenha", "Nova senha é diferente da confirmação!");
+                if (ModelState.IsValid)
+                {
+                    var errors = await _autenticacaoClient.TrocaSenhaAsync(trocaSenha);
+
+                    foreach (var erro in errors) { ModelState.AddModelError("SenhaAtual", erro); }
+
+                    if (ModelState.IsValid) return RedirectToAction("Index", "Home");
+                }
                 return View(trocaSenha);
             }
-
-            trocaSenha.Email = Email;
-            var result = await _trocaSenha.TrocaSenhaAsync(trocaSenha);
-            if (result.Succeeded) return RedirectToAction("Index", "Home");
-
-            foreach (var erro in result.Errors) { ModelState.AddModelError("SenhaAtual", erro); }
-            return View(trocaSenha);
+            catch (ClientException ex) 
+            { 
+                ModelState.AddModelError("SenhaAtual", ex.Message);
+                return View(trocaSenha);
+            }
+            catch (Exception) { return Error(null, null); }
         }
         #endregion
 
@@ -166,7 +173,8 @@ namespace SEG.UI.Controllers.Autenticacao
         }
         #endregion
 
-        private async Task<bool> Login(Domain.Models.Response.RegisterModel register, string title)
+        #region Autenticado
+        private async Task<bool> Autenticado(RegistroModel register, string title)
         {
             Seguranca seguranca;
             try
@@ -201,20 +209,21 @@ namespace SEG.UI.Controllers.Autenticacao
             }
             catch (Exception) { return false; }
         }
+        #endregion
 
         #region Error
-        private void Error(ResultModel result, string title)
+        private ActionResult Error(string mensagem, string title)
         {
-            if (result.ObjectResult == (int)EObjectResult.ErroFatal)
+            if (mensagem == null)
             {
                 ViewBag.ErrorTitle = null;
             }
             else
             {
                 ViewBag.ErrorTitle = title;
-                ViewBag.ErrorMessage = result.Errors[0];
+                ViewBag.ErrorMessage = mensagem;
             }
-            var x = 1; var y = 0; x = x / y;
+            return View("Error");
         }
         #endregion
     }

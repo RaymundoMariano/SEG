@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SEG.Domain.Models.Response
 {
-    public class RegisterModel
+    public class RegistroModel
     {
         public SegurancaModel Seguranca { get; set; }
         public string Nome { get; set; }

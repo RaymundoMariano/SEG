@@ -5,7 +5,6 @@ namespace SEG.Domain.Models.Autenticacao
 {
     public class TrocaSenhaModel
     {
-        [Required(ErrorMessage = "campo obrigatório")]
         [StringLength(100, ErrorMessage = "limite de caracteres excedido")]
         [EmailAddress]
         public string Email { get; set; }

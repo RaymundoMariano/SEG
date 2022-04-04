@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using SEG.Domain.Contracts.Clients;
-using SEG.Domain.Enums;
+using SEG.Client;
+using SEG.Domain;
+using SEG.Domain.Contracts.Clients.Aplicacao;
 using SEG.Domain.Models.Aplicacao;
-using SEG.Domain.Models.Response;
-using SEG.Service;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -24,8 +23,8 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IFormularioAlication _formularioClient;
-        public FormulariosController(IFormularioAlication formularioClient)
+        private readonly IFormularioClient _formularioClient;
+        public FormulariosController(IFormularioClient formularioClient)
         {
             _formularioClient = formularioClient;
         }
@@ -37,21 +36,13 @@ namespace SEG.UI.Controllers
             try
             {
                 var mensagem = Seguranca.TemPermissao();
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _formularioClient.ObterAsync(Token);
-                if (result.Succeeded)
-                {
-                    var formularios = JsonConvert.DeserializeObject<List<FormularioModel>>(result.ObjectRetorno.ToString());
-                    return View(formularios.FindAll(f => f.CreatedSystem == false).ToList());
-                }
-                else
-                    return Error(result);
+                var formularios = await _formularioClient.ObterAsync(Token);
+
+                return View(formularios.FindAll(f => f.CreatedSystem == false));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -62,19 +53,9 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var result = await _formularioClient.ObterAsync(id, Token);
-                if (result.Succeeded)
-                {
-                    var formulario = JsonConvert.DeserializeObject<FormularioModel>(result.ObjectRetorno.ToString());
-                    return View(formulario);
-                }
-                else
-                    return Error(result);
+                return View(await _formularioClient.ObterAsync(id, Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -92,23 +73,23 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Formulario", "Incluir");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _formularioClient.InsereAsync(formulario, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-
-                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
+                if (ModelState.IsValid)
                 {
-                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(formulario);
+                    var mensagem = Seguranca.TemPermissao("Formulario", "Incluir");
+                    if (mensagem != null) return Error(mensagem);
+
+                    await _formularioClient.InsereAsync(formulario, Token);
+
+                    return RedirectToAction(nameof(Index));
                 }
-                return Error(result);
+                return View(formulario);
             }
-            catch
+            catch (ClientException ex)
             {
-                return Error(ETipoErro.Fatal, null);
+                ModelState.AddModelError("Nome", ex.Message);
+                return View(formulario);
             }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -126,23 +107,23 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Formulario", "Alterar");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _formularioClient.UpdateAsync(id, formulario, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-
-                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
+                if (ModelState.IsValid)
                 {
-                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(formulario);
+                    var mensagem = Seguranca.TemPermissao("Formulario", "Alterar");
+                    if (mensagem != null) return Error(mensagem);
+
+                    await _formularioClient.UpdateAsync(id, formulario, Token);
+
+                    return RedirectToAction(nameof(Index));
                 }
-                return Error(result);
+                return View(formulario);
             }
-            catch
+            catch (ClientException ex)
             {
-                return Error(ETipoErro.Fatal, null);
+                ModelState.AddModelError("Nome", ex.Message);
+                return View(formulario);
             }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -161,17 +142,14 @@ namespace SEG.UI.Controllers
             try
             {
                 var mensagem = Seguranca.TemPermissao("Formulario", "Excluir");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _formularioClient.RemoveAsync(id, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-                else
-                    return Error(result);
+                await _formularioClient.RemoveAsync(id, Token);
+
+                return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (ClientException ex) { return Error(ex.Message); }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -182,66 +160,42 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var result = await _formularioClient.ObterAsync(formularioId, Token);
-                if (result.Succeeded)
-                {
-                    ViewBag.Formulario = JsonConvert.DeserializeObject<FormularioModel>(result.ObjectRetorno.ToString());
-                }
-                else
-                    return Error(result);
+                ViewBag.Formulario = await _formularioClient.ObterAsync(formularioId, Token);
 
-                result = await _formularioClient.ObterEventosAsync(formularioId, Token);
-                if (result.Succeeded)
-                {
-                    var eventos = JsonConvert.DeserializeObject<List<EventoModel>>(result.ObjectRetorno.ToString());
-                    return View(eventos);
-                }
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-                else
-                    return Error(result);
+                return View(await _formularioClient.ObterEventosAsync(formularioId, Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (Exception) { return Error(null); }
         }
 
         // GET: FormulariosController/EditEventos
         [HttpPost]
         public async Task<ActionResult> EditEventos(int formularioId, List<EventoModel> eventosModel)
         {
-            var mensagem = Seguranca.TemPermissao("Formulario", "Associar Evento");
-            if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+            try
+            {
+                var mensagem = Seguranca.TemPermissao("Formulario", "Associar Evento");
+                if (mensagem != null) return Error(mensagem);
 
-            var result = await _formularioClient.AtualizarEventosAsync(formularioId, eventosModel, Token);
-            if (result.Succeeded) return RedirectToAction("Edit", new { Id = formularioId });
-            else
-                return Error(result);
+                await _formularioClient.AtualizarEventosAsync(formularioId, eventosModel, Token);
+                
+                return RedirectToAction("Edit", new { Id = formularioId });
+            }
+            catch (ClientException ex) { return Error(ex.Message); }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
         #region Error
-        private ActionResult Error(ETipoErro eTipoErro, string mensagem)
+        private ActionResult Error(string mensagem)
         {
-            return Error(new ResultModel()
-            {
-                ObjectResult = (eTipoErro == ETipoErro.Fatal)
-                    ? (int)EObjectResult.ErroFatal
-                    : (int)eTipoErro,
-                Errors = new List<string>() { mensagem }
-            });
-        }
-
-        private ActionResult Error(ResultModel result)
-        {
-            if (result.ObjectResult == (int)EObjectResult.ErroFatal)
+            if (mensagem == null)
             {
                 ViewBag.ErrorTitle = null;
             }
             else
             {
-                ViewBag.ErrorTitle = "Formulário";
-                ViewBag.ErrorMessage = result.Errors[0];
+                ViewBag.ErrorTitle = "Formulario";
+                ViewBag.ErrorMessage = mensagem;
             }
             return View("Error");
         }

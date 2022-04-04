@@ -7,7 +7,6 @@
   <ItemGroup>
     <ProjectReference Include="..\SEG.Client\SEG.Client.csproj" />
     <ProjectReference Include="..\SEG.Domain\SEG.Domain.csproj" />
-    <ProjectReference Include="..\SEG.Service\SEG.Service.csproj" />
   </ItemGroup>
 
 </Project>

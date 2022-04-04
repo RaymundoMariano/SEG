@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SEG.Service
+namespace SEG.Domain
 {
     public class Seguranca
     {

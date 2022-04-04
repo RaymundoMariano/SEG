@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using SEG.Domain.Contracts.Clients;
-using SEG.Domain.Enums;
+using SEG.Client;
+using SEG.Domain;
+using SEG.Domain.Contracts.Clients.Aplicacao;
 using SEG.Domain.Models.Aplicacao;
-using SEG.Domain.Models.Response;
-using SEG.Service;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -24,8 +23,8 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IEventoAplication _eventoClient;
-        public EventosController(IEventoAplication eventoClient)
+        private readonly IEventoClient _eventoClient;
+        public EventosController(IEventoClient eventoClient)
         {
             _eventoClient = eventoClient;
         }
@@ -37,21 +36,13 @@ namespace SEG.UI.Controllers
             try
             {
                 var mensagem = Seguranca.TemPermissao();
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _eventoClient.ObterAsync(Token);
-                if (result.Succeeded)
-                {
-                    var eventos = JsonConvert.DeserializeObject<List<EventoModel>>(result.ObjectRetorno.ToString());
-                    return View(eventos.FindAll(e => e.CreatedSystem == false).ToList());
-                }
-                else
-                    return Error(result);
+                var eventos = await _eventoClient.ObterAsync(Token);
+
+                return View(eventos.FindAll(e => e.CreatedSystem == false));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -62,19 +53,9 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var result = await _eventoClient.ObterAsync(id, Token);
-                if (result.Succeeded)
-                {
-                    var evento = JsonConvert.DeserializeObject<EventoModel>(result.ObjectRetorno.ToString());
-                    return View(evento);
-                }
-                else
-                    return Error(result);
+                return View(await _eventoClient.ObterAsync(id, Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -92,28 +73,23 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Evento", "Incluir");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _eventoClient.InsereAsync(evento, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-
-                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
+                if (ModelState.IsValid)
                 {
-                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(evento);
-                }
-                return Error(result);
-            }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
-        }
+                    var mensagem = Seguranca.TemPermissao("Evento", "Incluir");
+                    if (mensagem != null) return Error(mensagem);
 
-        private ActionResult Error(object sistema, string mensagem)
-        {
-            throw new System.NotImplementedException();
+                    await _eventoClient.InsereAsync(evento, Token);
+
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(evento);
+            }
+            catch (ClientException ex) 
+            {
+                ModelState.AddModelError("Nome", ex.Message);
+                return View(evento);
+            }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -131,23 +107,23 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var mensagem = Seguranca.TemPermissao("Evento", "Alterar");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
-
-                var result = await _eventoClient.UpdateAsync(id, evento, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-
-                if ((ETipoErro)result.ObjectResult == ETipoErro.Sistema)
+                if (ModelState.IsValid)
                 {
-                    foreach (var erro in result.Errors) { ModelState.AddModelError("Nome", erro); }
-                    return View(evento);
+                    var mensagem = Seguranca.TemPermissao("Evento", "Alterar");
+                    if (mensagem != null) return Error(mensagem);
+
+                    await _eventoClient.UpdateAsync(id, evento, Token);
+                    
+                    return RedirectToAction(nameof(Index));
                 }
-                return Error(result);
+                return View(evento);
             }
-            catch
+            catch (ClientException ex)
             {
-                return Error(ETipoErro.Fatal, null);
+                ModelState.AddModelError("Nome", ex.Message);
+                return View(evento);
             }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -166,42 +142,28 @@ namespace SEG.UI.Controllers
             try
             {
                 var mensagem = Seguranca.TemPermissao("Evento", "Excluir");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _eventoClient.RemoveAsync(id, Token);
-                if (result.Succeeded) return RedirectToAction(nameof(Index));
-                else
-                    return Error(result);
+                await _eventoClient.RemoveAsync(id, Token);
+
+                return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (ClientException ex) { return Error(ex.Message); }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
         #region Error
-        private ActionResult Error(ETipoErro eTipoErro, string mensagem)
+        private ActionResult Error(string mensagem)
         {
-            return Error(new ResultModel()
-            {
-                ObjectResult = (eTipoErro == ETipoErro.Fatal)
-                    ? (int)EObjectResult.ErroFatal
-                    : (int)eTipoErro,
-                Errors = new List<string>() { mensagem }
-            });
-        }
-
-        private ActionResult Error(ResultModel result)
-        {
-            if (result.ObjectResult == (int)EObjectResult.ErroFatal)
+            if (mensagem == null)
             {
                 ViewBag.ErrorTitle = null;
             }
             else
             {
                 ViewBag.ErrorTitle = "Evento";
-                ViewBag.ErrorMessage = result.Errors[0];
+                ViewBag.ErrorMessage = mensagem;
             }
             return View("Error");
         }

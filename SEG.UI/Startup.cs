@@ -2,18 +2,16 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SEG.Client;
 using SEG.Client.Aplicacao;
 using SEG.Client.Autenticacao;
 using SEG.Client.Seguranca;
-using SEG.Domain.Contracts.Autenticacao;
-using SEG.Domain.Contracts.Clients;
-using SEG.Domain.Contracts.Seguranca;
+using SEG.Domain.Contracts.Clients.Aplicacao;
+using SEG.Domain.Contracts.Clients.Autenticacao;
+using SEG.Domain.Contracts.Clients.Seguranca;
 using System;
 
 namespace SEG.UI
@@ -31,22 +29,20 @@ namespace SEG.UI
         public void ConfigureServices(IServiceCollection services)
         {
             //Serviços da Aplicacao
-            services.AddTransient<IEventoAplication, EventoAplication>();
-            services.AddTransient<IFormularioAlication, FormularioAplication>();
-            services.AddTransient<IModuloAplication, ModuloAplication>();
-            services.AddTransient<IPerfilAplication, PerfilAplication>();
-            services.AddTransient<IFuncaoAplication, FuncaoAplicaton>();
-            services.AddTransient<IUsuarioAplication, UsuarioAplication>();
+            services.AddTransient<IEventoClient, EventoClient>();
+            services.AddTransient<IFormularioClient, FormularioClient>();
+            services.AddTransient<IModuloClient, ModuloClient>();
+            services.AddTransient<IPerfilClient, PerfilClient>();
+            services.AddTransient<IFuncaoClient, FuncaoClient>();
+            services.AddTransient<IUsuarioClient, UsuarioClient>();
 
-            //Serviços do Autenticador
-            services.AddTransient<IRegisterAuthentication, RegisterAuthentication>();
-            services.AddTransient<ILoginAuthentication, LoginAuthentication>();
-            services.AddTransient<ITrocaSenhaAuthentication, TrocaSenhaAuthentication>();
+            //Serviço de Autenticação
+            services.AddTransient<IAutenticacaoClient, AutenticacaoClient>();
 
-            //Serviços do Seguranca
-            services.AddTransient<IUsuarioSecurity, UsuarioSecurity>();
+            //Serviços de Seguranca
+            services.AddTransient<ISegurancaClient, SegurancaClient>();
 
-            //Serviço de cookie na aplicação
+            //Serviço de Cookie
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {

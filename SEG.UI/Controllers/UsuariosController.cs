@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using SEG.Domain.Contracts.Clients;
-using SEG.Domain.Enums;
+using SEG.Client;
+using SEG.Domain;
+using SEG.Domain.Contracts.Clients.Aplicacao;
 using SEG.Domain.Models.Aplicacao;
-using SEG.Domain.Models.Response;
-using SEG.Service;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -23,9 +23,9 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IUsuarioAplication _usuarioClient;
-        private readonly IPerfilAplication _perfilClient;
-        public UsuariosController(IUsuarioAplication usuarioClient, IPerfilAplication perfilClient)
+        private readonly IUsuarioClient _usuarioClient;
+        private readonly IPerfilClient _perfilClient;
+        public UsuariosController(IUsuarioClient usuarioClient, IPerfilClient perfilClient)
         {
             _usuarioClient = usuarioClient;
             _perfilClient = perfilClient;
@@ -38,21 +38,11 @@ namespace SEG.UI.Controllers
             try
             {
                 var mensagem = Seguranca.TemPermissao();
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _usuarioClient.ObterAsync(Token);
-                if (result.Succeeded)
-                {
-                    var usuarios = JsonConvert.DeserializeObject<List<UsuarioModel>>(result.ObjectRetorno.ToString());
-                    return View(usuarios);
-                }
-                else
-                    return Error(result);
+                return View(await _usuarioClient.ObterAsync(Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch { return Error(null); }
         }
         #endregion
 
@@ -64,19 +54,9 @@ namespace SEG.UI.Controllers
             {
                 ViewBag.Seguranca = Seguranca;
 
-                var result = await _usuarioClient.ObterAsync(id, Token);
-                if (result.Succeeded)
-                {
-                    var usuario = JsonConvert.DeserializeObject<UsuarioModel>(result.ObjectRetorno.ToString());
-                    return View(usuario);
-                }
-                else
-                    return Error(result);
+                return View(await _usuarioClient.ObterAsync(id, Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch { return Error(null); }
         }
         #endregion
 
@@ -95,27 +75,11 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var result = await _usuarioClient.ObterAsync(usuarioId, Token);
-                if (result.Succeeded)
-                {
-                    ViewBag.Usuario = JsonConvert.DeserializeObject<UsuarioModel>(result.ObjectRetorno.ToString());
-                }
-                else
-                    return Error(result);
-
-                result = await _usuarioClient.ObterRestricoesAsync(usuarioId, Token);
-                if (result.Succeeded)
-                {
-                    var restricoes = JsonConvert.DeserializeObject<List<RestricaoUsuarioModel>>(result.ObjectRetorno.ToString());
-                    return View(restricoes);
-                }
-                else
-                    return Error(result);
+                ViewBag.Usuario = await _usuarioClient.ObterAsync(usuarioId, Token);
+                
+                return View(await _usuarioClient.ObterRestricoesAsync(usuarioId, Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch { return Error(null); }
         }
 
         // GET: UsuariosController/EditRestricoes
@@ -124,18 +88,15 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                //var mensagem = Seguranca.TemPermissao("Usuario", "Associar Restricoes");
-                //if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                var mensagem = Seguranca.TemPermissao("Usuario", "Associar Restricoes");
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _usuarioClient.AtualizarRestricoesAsync(usuarioId, restricoesModel, Token);
-                if (result.Succeeded) return RedirectToAction("Edit", new { Id = usuarioId });
-                else
-                    return Error(result);
+                await _usuarioClient.AtualizarRestricoesAsync(usuarioId, restricoesModel, Token);
+                
+                return RedirectToAction("Edit", new { Id = usuarioId });
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (ClientException ex) { return Error(ex.Message); }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
@@ -146,36 +107,13 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                var result = await _usuarioClient.ObterAsync(usuarioId, Token);
-                if (result.Succeeded)
-                {
-                    var usuario = JsonConvert.DeserializeObject<UsuarioModel>(result.ObjectRetorno.ToString());
-                    ViewBag.Usuario = usuario;
-                }
-                else
-                    return Error(result);
+                ViewBag.Usuario = await _usuarioClient.ObterAsync(usuarioId, Token);
 
-                result = await _perfilClient.ObterAsync(Token);
-                if (result.Succeeded)
-                {
-                    ViewBag.Perfis = JsonConvert.DeserializeObject<List<PerfilModel>>(result.ObjectRetorno.ToString());
-                }
-                else
-                    return Error(result);
-
-                result = await _usuarioClient.ObterPerfisAsync(usuarioId, Token);
-                if (result.Succeeded)
-                {
-                    var perfisUsuario = JsonConvert.DeserializeObject<List<PerfilUsuarioModel>>(result.ObjectRetorno.ToString());
-                    return View(perfisUsuario);
-                }
-                else
-                    return Error(result);
+                ViewBag.Perfis = await _perfilClient.ObterAsync(Token);
+                
+                return View(await _usuarioClient.ObterPerfisAsync(usuarioId, Token));
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (Exception) { return Error(null); }
         }
 
         // GET: UsuariosController/EditPerfis
@@ -185,42 +123,28 @@ namespace SEG.UI.Controllers
             try
             {
                 var mensagem = Seguranca.TemPermissao("Usuario", "Associar Perfil");
-                if (mensagem != null) return Error(ETipoErro.Sistema, mensagem);
+                if (mensagem != null) return Error(mensagem);
 
-                var result = await _usuarioClient.AtualizarPerfisAsync(usuarioId, perfisModel, Token);
-                if (result.Succeeded) return RedirectToAction("Details", new { Id = usuarioId });
-                else
-                    return Error(result);
+                await _usuarioClient.AtualizarPerfisAsync(usuarioId, perfisModel, Token);
+                
+                return RedirectToAction("Details", new { Id = usuarioId });
             }
-            catch
-            {
-                return Error(ETipoErro.Fatal, null);
-            }
+            catch (ClientException ex) { return Error(ex.Message); }
+            catch (Exception) { return Error(null); }
         }
         #endregion
 
         #region Error
-        private ActionResult Error(ETipoErro eTipoErro, string mensagem)
+        private ActionResult Error(string mensagem)
         {
-            return Error(new ResultModel()
-            {
-                ObjectResult = (eTipoErro == ETipoErro.Fatal)
-                    ? (int)EObjectResult.ErroFatal
-                    : (int)eTipoErro,
-                Errors = new List<string>() { mensagem }
-            });
-        }
-
-        private ActionResult Error(ResultModel result)
-        {
-            if (result.ObjectResult == (int)EObjectResult.ErroFatal)
+            if (mensagem == null)
             {
                 ViewBag.ErrorTitle = null;
             }
             else
             {
-                ViewBag.ErrorTitle = "Usuário";
-                ViewBag.ErrorMessage = result.Errors[0];
+                ViewBag.ErrorTitle = "Usuario";
+                ViewBag.ErrorMessage = mensagem;
             }
             return View("Error");
         }

@@ -11,9 +11,8 @@ using System.Threading.Tasks;
 using SEG.Domain.Models.Response;
 using SEG.Domain.Models.Autenticacao;
 using SEG.Domain;
-using SEG.Domain.Contracts.Clients.Autenticacao;
-using SEG.Domain.Contracts.Clients.Seguranca;
 using SEG.Client;
+using SEG.Domain.Contracts.UnitOfWorks;
 
 namespace SEG.UI.Controllers.Autenticacao
 {
@@ -29,12 +28,10 @@ namespace SEG.UI.Controllers.Autenticacao
         }
         private string Email { get { return User.FindFirst(ClaimTypes.Email).Value; } }
 
-        private readonly IAutenticacaoClient _autenticacaoClient;
-        private readonly ISegurancaClient _segurancaClient;
-        public ContaController(IAutenticacaoClient autenticacaoClient, ISegurancaClient segurancaClient)
+        private readonly IUnitOfWork _unitOfWork;
+        public ContaController(IUnitOfWork unitOfWork)
         {
-            _autenticacaoClient = autenticacaoClient;
-            _segurancaClient = segurancaClient;
+            _unitOfWork = unitOfWork;
         }
 
         #region Register
@@ -52,13 +49,13 @@ namespace SEG.UI.Controllers.Autenticacao
             {
                 if (ModelState.IsValid)
                 {
-                    registro = await _autenticacaoClient.RegisterAsync(register);
+                    registro = await _unitOfWork.Autenticacao.RegisterAsync(register);
 
                     foreach (var erro in registro.Errors) { ModelState.AddModelError("UserName", erro); }
 
                     if (ModelState.IsValid)
                     {
-                        registro.Seguranca = await _segurancaClient.ObterPerfilAsync("SegurancaNet", registro);
+                        registro.Seguranca = await _unitOfWork.Seguranca.ObterPerfilAsync("SegurancaNet", registro);
                         
                         if (!await Autenticado(registro, "Register")) return View("Error");
                     }
@@ -98,13 +95,13 @@ namespace SEG.UI.Controllers.Autenticacao
             {
                 if (ModelState.IsValid)
                 {
-                    registro = await _autenticacaoClient.LoginAsync(login);
+                    registro = await _unitOfWork.Autenticacao.LoginAsync(login);
 
                     foreach (var erro in registro.Errors) { ModelState.AddModelError("Email", erro); }
 
                     if (ModelState.IsValid)
                     {
-                        registro.Seguranca = await _segurancaClient.ObterPerfilAsync("SegurancaNet", registro);
+                        registro.Seguranca = await _unitOfWork.Seguranca.ObterPerfilAsync("SegurancaNet", registro);
 
                         if (!await Autenticado(registro, "Login")) return View("Error");
                     }
@@ -147,7 +144,7 @@ namespace SEG.UI.Controllers.Autenticacao
             {
                 if (ModelState.IsValid)
                 {
-                    var errors = await _autenticacaoClient.TrocaSenhaAsync(trocaSenha);
+                    var errors = await _unitOfWork.Autenticacao.TrocaSenhaAsync(trocaSenha);
 
                     foreach (var erro in errors) { ModelState.AddModelError("SenhaAtual", erro); }
 

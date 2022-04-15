@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SEG.Client;
 using SEG.Domain;
-using SEG.Domain.Contracts.Clients.Aplicacao;
+using SEG.Domain.Contracts.UnitOfWorks;
 using SEG.Domain.Models.Aplicacao;
 using System;
-using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -23,10 +22,10 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IEventoClient _eventoClient;
-        public EventosController(IEventoClient eventoClient)
+        private readonly IUnitOfWork _unitOfWork;
+        public EventosController(IUnitOfWork unitOfWork)
         {
-            _eventoClient = eventoClient;
+            _unitOfWork = unitOfWork;
         }
 
         #region Index
@@ -38,7 +37,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao();
                 if (mensagem != null) return Error(mensagem);
 
-                var eventos = await _eventoClient.ObterAsync(Token);
+                var eventos = await _unitOfWork.Eventos.ObterAsync(Token);
 
                 return View(eventos.FindAll(e => e.CreatedSystem == false));
             }
@@ -53,7 +52,7 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                return View(await _eventoClient.ObterAsync(id, Token));
+                return View(await _unitOfWork.Eventos.ObterAsync(id, Token));
             }
             catch (Exception) { return Error(null); }
         }
@@ -78,7 +77,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Evento", "Incluir");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _eventoClient.InsereAsync(evento, Token);
+                    await _unitOfWork.Eventos.InsereAsync(evento, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -112,7 +111,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Evento", "Alterar");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _eventoClient.UpdateAsync(id, evento, Token);
+                    await _unitOfWork.Eventos.UpdateAsync(id, evento, Token);
                     
                     return RedirectToAction(nameof(Index));
                 }
@@ -144,7 +143,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Evento", "Excluir");
                 if (mensagem != null) return Error(mensagem);
 
-                await _eventoClient.RemoveAsync(id, Token);
+                await _unitOfWork.Eventos.RemoveAsync(id, Token);
 
                 return RedirectToAction(nameof(Index));
             }

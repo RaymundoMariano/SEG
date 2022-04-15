@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SEG.Client;
 using SEG.Domain;
-using SEG.Domain.Contracts.Clients.Aplicacao;
+using SEG.Domain.Contracts.UnitOfWorks;
 using SEG.Domain.Models.Aplicacao;
 using System;
 using System.Collections.Generic;
@@ -24,10 +24,10 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IModuloClient _moduloClient;
-        public ModulosController(IModuloClient moduloClient)
+        private readonly IUnitOfWork _unitOfWork;
+        public ModulosController(IUnitOfWork unitOfWork)
         {
-            _moduloClient = moduloClient;
+            _unitOfWork = unitOfWork;
         }
 
         #region Index
@@ -39,7 +39,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao();
                 if (mensagem != null) return Error(mensagem);
 
-                var modulos = await _moduloClient.ObterAsync(Token);
+                var modulos = await _unitOfWork.Modulos.ObterAsync(Token);
 
                 return View(modulos.FindAll(m => m.CreatedSystem == false).ToList());
             }
@@ -54,7 +54,7 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                return View(await _moduloClient.ObterAsync(id, Token));
+                return View(await _unitOfWork.Modulos.ObterAsync(id, Token));
             }
             catch { return Error(null); }
         }
@@ -79,7 +79,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Modulo", "Incluir");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _moduloClient.InsereAsync(modulo, Token);
+                    await _unitOfWork.Modulos.InsereAsync(modulo, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -113,7 +113,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Modulo", "Alterar");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _moduloClient.UpdateAsync(id, modulo, Token);
+                    await _unitOfWork.Modulos.UpdateAsync(id, modulo, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -145,7 +145,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Modulo", "Excluir");
                 if (mensagem != null) return Error(mensagem);
 
-                await _moduloClient.RemoveAsync(id, Token);
+                await _unitOfWork.Modulos.RemoveAsync(id, Token);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -161,9 +161,9 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                ViewBag.Modulo = await _moduloClient.ObterAsync(moduloId, Token);
+                ViewBag.Modulo = await _unitOfWork.Modulos.ObterAsync(moduloId, Token);
                 
-                var formularios = await _moduloClient.ObterFormulariosAsync(moduloId, Token);
+                var formularios = await _unitOfWork.Modulos.ObterFormulariosAsync(moduloId, Token);
                 
                 return View(formularios.FindAll(f => f.CreatedSystem == false).ToList());
             }
@@ -179,7 +179,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Modulo", "Associar Formulario");
                 if (mensagem != null) return Error(mensagem);
 
-                await _moduloClient.AtualizarFormulariosAsync(moduloId, formulariosModel, Token);
+                await _unitOfWork.Modulos.AtualizarFormulariosAsync(moduloId, formulariosModel, Token);
                 
                 return RedirectToAction("Edit", new { Id = moduloId });
             }

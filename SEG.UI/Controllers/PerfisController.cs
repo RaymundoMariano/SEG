@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SEG.Client;
 using SEG.Domain;
-using SEG.Domain.Contracts.Clients.Aplicacao;
+using SEG.Domain.Contracts.UnitOfWorks;
 using SEG.Domain.Enums;
 using SEG.Domain.Models.Aplicacao;
 using System;
@@ -25,12 +25,10 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IPerfilClient _perfilClient;
-        private readonly IFuncaoClient _funcaoClient;
-        public PerfisController(IPerfilClient perfilClient, IFuncaoClient funcaoClient)
+        private readonly IUnitOfWork _unitOfWork;
+        public PerfisController(IUnitOfWork unitOfWork)
         {
-            _perfilClient = perfilClient;
-            _funcaoClient = funcaoClient;
+            _unitOfWork = unitOfWork;
         }
 
         #region Index
@@ -42,7 +40,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao();
                 if (mensagem != null) return Error(mensagem);
 
-                var perfis = await _perfilClient.ObterAsync(Token);
+                var perfis = await _unitOfWork.Perfis.ObterAsync(Token);
 
                 return View(perfis.FindAll(p => p.CreatedSystem == false).ToList());
             }
@@ -59,13 +57,13 @@ namespace SEG.UI.Controllers
             {
                 ViewBag.Seguranca = Seguranca;
 
-                var perfil = await _perfilClient.ObterAsync(id, Token);
+                var perfil = await _unitOfWork.Perfis.ObterAsync(id, Token);
 
                 var funcaoId = (EFuncao)Seguranca.Perfil.FuncaoId == EFuncao.Presidência
                     ? Seguranca.Perfil.FuncaoId
                     : perfil.FuncaoId - 1;
 
-                ViewBag.Funcoes = await _funcaoClient.ObterAsync((EFuncao)funcaoId, Token);
+                ViewBag.Funcoes = await _unitOfWork.Funcoes.ObterAsync((EFuncao)funcaoId, Token);
 
                 return View(perfil);
             }
@@ -80,7 +78,7 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                ViewBag.Funcoes = await _funcaoClient.ObterAsync((EFuncao)Seguranca.Perfil.FuncaoId, Token);
+                ViewBag.Funcoes = await _unitOfWork.Funcoes.ObterAsync((EFuncao)Seguranca.Perfil.FuncaoId, Token);
                 return View();
             }
             catch (Exception) { return Error(null); }
@@ -98,7 +96,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Perfil", "Incluir");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _perfilClient.InsereAsync(perfil, Token);
+                    await _unitOfWork.Perfis.InsereAsync(perfil, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -107,7 +105,7 @@ namespace SEG.UI.Controllers
             catch (ClientException ex)
             {
                 ModelState.AddModelError("Nome", ex.Message);
-                ViewBag.Funcoes = await _funcaoClient.ObterAsync((EFuncao)Seguranca.Perfil.FuncaoId, Token);
+                ViewBag.Funcoes = await _unitOfWork.Funcoes.ObterAsync((EFuncao)Seguranca.Perfil.FuncaoId, Token);
                 return View(perfil);
             }
             catch (Exception) { return Error(null); }
@@ -133,7 +131,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Perfil", "Alterar");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _perfilClient.UpdateAsync(id, perfil, Token);
+                    await _unitOfWork.Perfis.UpdateAsync(id, perfil, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -165,7 +163,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Perfil", "Excluir");
                 if (mensagem != null) return Error(mensagem);
 
-                await _perfilClient.RemoveAsync(id, Token);
+                await _unitOfWork.Perfis.RemoveAsync(id, Token);
                 
                 return RedirectToAction(nameof(Index));
             }
@@ -181,9 +179,9 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                ViewBag.Perfil = await _perfilClient.ObterAsync(perfilId, Token);
+                ViewBag.Perfil = await _unitOfWork.Perfis.ObterAsync(perfilId, Token);
                 
-                return View(await _perfilClient.ObterRestricoesAsync(perfilId, Token));
+                return View(await _unitOfWork.Perfis.ObterRestricoesAsync(perfilId, Token));
             }
             catch (Exception) { return Error(null); }
         }
@@ -197,7 +195,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Perfil", "Associar Restricoes");
                 if (mensagem != null) return Error(mensagem);
 
-                await _perfilClient.AtualizarRestricoesAsync(perfilId, restricoesModel, User.FindFirstValue("Token"));
+                await _unitOfWork.Perfis.AtualizarRestricoesAsync(perfilId, restricoesModel, User.FindFirstValue("Token"));
                 
                 return RedirectToAction("Edit", new { Id = perfilId });
             }

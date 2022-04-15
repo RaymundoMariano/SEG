@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SEG.Client;
 using SEG.Client.Aplicacao;
 using SEG.Client.Autenticacao;
 using SEG.Client.Seguranca;
 using SEG.Domain.Contracts.Clients.Aplicacao;
 using SEG.Domain.Contracts.Clients.Autenticacao;
 using SEG.Domain.Contracts.Clients.Seguranca;
+using SEG.Domain.Contracts.UnitOfWorks;
 using System;
 
 namespace SEG.UI
@@ -41,6 +43,9 @@ namespace SEG.UI
 
             //Serviços de Seguranca
             services.AddTransient<ISegurancaClient, SegurancaClient>();
+
+            //Serviço de Unidade de Trabalho
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             //Serviço de Cookie
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

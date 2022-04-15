@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SEG.Client;
 using SEG.Domain;
-using SEG.Domain.Contracts.Clients.Aplicacao;
+using SEG.Domain.Contracts.UnitOfWorks;
 using SEG.Domain.Models.Aplicacao;
 using System;
 using System.Collections.Generic;
@@ -23,10 +23,10 @@ namespace SEG.UI.Controllers
         }
         private string Token { get { return User.FindFirstValue("Token"); } }
 
-        private readonly IFormularioClient _formularioClient;
-        public FormulariosController(IFormularioClient formularioClient)
+        private readonly IUnitOfWork _unitOfWork;
+        public FormulariosController(IUnitOfWork unitOfWork)
         {
-            _formularioClient = formularioClient;
+            _unitOfWork = unitOfWork;
         }
 
         #region Index
@@ -38,7 +38,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao();
                 if (mensagem != null) return Error(mensagem);
 
-                var formularios = await _formularioClient.ObterAsync(Token);
+                var formularios = await _unitOfWork.Formularios.ObterAsync(Token);
 
                 return View(formularios.FindAll(f => f.CreatedSystem == false));
             }
@@ -53,7 +53,7 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                return View(await _formularioClient.ObterAsync(id, Token));
+                return View(await _unitOfWork.Formularios.ObterAsync(id, Token));
             }
             catch (Exception) { return Error(null); }
         }
@@ -78,7 +78,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Formulario", "Incluir");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _formularioClient.InsereAsync(formulario, Token);
+                    await _unitOfWork.Formularios.InsereAsync(formulario, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -112,7 +112,7 @@ namespace SEG.UI.Controllers
                     var mensagem = Seguranca.TemPermissao("Formulario", "Alterar");
                     if (mensagem != null) return Error(mensagem);
 
-                    await _formularioClient.UpdateAsync(id, formulario, Token);
+                    await _unitOfWork.Formularios.UpdateAsync(id, formulario, Token);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -144,7 +144,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Formulario", "Excluir");
                 if (mensagem != null) return Error(mensagem);
 
-                await _formularioClient.RemoveAsync(id, Token);
+                await _unitOfWork.Formularios.RemoveAsync(id, Token);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -160,9 +160,9 @@ namespace SEG.UI.Controllers
         {
             try
             {
-                ViewBag.Formulario = await _formularioClient.ObterAsync(formularioId, Token);
+                ViewBag.Formulario = await _unitOfWork.Formularios.ObterAsync(formularioId, Token);
 
-                return View(await _formularioClient.ObterEventosAsync(formularioId, Token));
+                return View(await _unitOfWork.Formularios.ObterEventosAsync(formularioId, Token));
             }
             catch (Exception) { return Error(null); }
         }
@@ -176,7 +176,7 @@ namespace SEG.UI.Controllers
                 var mensagem = Seguranca.TemPermissao("Formulario", "Associar Evento");
                 if (mensagem != null) return Error(mensagem);
 
-                await _formularioClient.AtualizarEventosAsync(formularioId, eventosModel, Token);
+                await _unitOfWork.Formularios.AtualizarEventosAsync(formularioId, eventosModel, Token);
                 
                 return RedirectToAction("Edit", new { Id = formularioId });
             }

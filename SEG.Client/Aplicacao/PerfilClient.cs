@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using SEG.Domain.Models.Aplicacao;
 using SEG.Domain.Contracts.Clients.Aplicacao;
 using System;
+using Newtonsoft.Json;
+using SEG.Domain.Models.Response;
 
 namespace SEG.Client.Aplicacao
 {
@@ -12,12 +14,16 @@ namespace SEG.Client.Aplicacao
         public PerfilClient() : base("https://localhost:44366/api/perfis") { }
 
         #region ObterRestricoesAsync
-        public async Task<List<RestricaoPerfil>> ObterRestricoesAsync(int perfilId, string token)
+        public async Task<List<RestricaoPerfilModel>> ObterRestricoesAsync(int perfilId, string token)
         {
             try
             {
                 base.NovaRota("/GetRestricoes?perfilId=" + perfilId, token);
-                return await base.Client.GetFromJsonAsync<List<RestricaoPerfil>>("");
+                var response = await base.Client.GetFromJsonAsync<ResponseModel>("");
+
+                if (!response.Succeeded) throw new Exception();
+
+                return JsonConvert.DeserializeObject<List<RestricaoPerfilModel>>(response.ObjectRetorno.ToString());
             }
             catch (Exception) { throw; }
         }

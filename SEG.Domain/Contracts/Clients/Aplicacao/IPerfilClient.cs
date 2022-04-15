@@ -6,7 +6,7 @@ namespace SEG.Domain.Contracts.Clients.Aplicacao
 {
     public interface IPerfilClient : IClient<PerfilModel>
     {
-        Task<List<RestricaoPerfil>> ObterRestricoesAsync(int perfilId, string token);
+        Task<List<RestricaoPerfilModel>> ObterRestricoesAsync(int perfilId, string token);
         Task AtualizarRestricoesAsync(int perfilId, List<RestricaoPerfilModel> restricoesModel, string token);
     }
 }
